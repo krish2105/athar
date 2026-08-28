@@ -1,4 +1,5 @@
-.PHONY: setup gate test lint frame criteo panel recovery notebooks card allocator dashboard all clean
+.PHONY: setup gate test lint frame criteo panel mmm uplift clv experiments recovery \
+        triangulate notebooks-src notebooks card dashboard all clean
 
 setup:
 	uv sync --all-extras
@@ -28,10 +29,32 @@ criteo:
 panel:
 	uv run python scripts/build_panel.py
 
+# The headline media-mix fit, on the panel with the real Olist baseline.
+mmm:
+	uv run python scripts/build_mmm.py
+
+uplift:
+	uv run python scripts/build_uplift.py
+
+clv:
+	uv run python scripts/build_clv.py
+
+experiments:
+	uv run python scripts/build_experiments.py
+
+# Reconciliation, allocation, and the artifact the dashboard reads.
+triangulate:
+	uv run python scripts/build_triangulation.py
+
 # 40 full-posterior fits. Resumable: each cell is cached under a hash of its
 # configuration, so an interrupted run costs one fit rather than the batch.
 recovery:
 	uv run python scripts/run_recovery.py
+
+# The notebooks are generated from one place, because eight of them share a
+# preamble and a house style and eight hand-maintained copies drift.
+notebooks-src:
+	uv run python scripts/build_notebooks.py
 
 # Execute, then clear, as two passes. Combining them does not work: nbconvert
 # runs ClearOutputPreprocessor before ExecutePreprocessor, so a single invocation
@@ -45,13 +68,11 @@ notebooks:
 card:
 	uv run python scripts/render_card.py
 
-allocator:
-	uv run python scripts/build_allocator_surface.py
-
 dashboard:
 	cd dashboard && npm ci && npm run build
 
-all: lint test gate frame criteo panel recovery notebooks card allocator dashboard
+all: lint test gate frame criteo panel mmm uplift clv experiments recovery \
+     triangulate notebooks-src notebooks card dashboard
 
 clean:
 	rm -rf .pytest_cache .ruff_cache __pycache__ .coverage

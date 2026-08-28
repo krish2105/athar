@@ -16,13 +16,26 @@ Gamma-Gamma on the 2,838 repeaters only, because monetary value conditional on
 repeating cannot be estimated from people who never repeated. That restriction is
 unavoidable and is labelled wherever the output appears.
 
-Two implementations, on purpose
--------------------------------
-``lifetimes`` gives the maximum-likelihood fit that the literature is written
-against. ``pymc-marketing`` gives a Bayesian fit with intervals, which this
-project's own conventions require of anything with a posterior. They are run on the
-same data and their point estimates compared: agreement between two independent
-implementations is evidence, in the way a model checking itself is not.
+The maximum-likelihood fit does not exist, and that is the finding
+------------------------------------------------------------------
+``lifetimes`` is the reference implementation the literature is written against.
+On this base it does not converge — at any time scale (days, weeks, months), at any
+penalty (0 to 10), on the full base *or* on the repeaters alone. The likelihood
+returns NaN and the parameters run off to the order of 1e-4 in log space.
+
+That is not a library defect and it is not a tuning problem. BG/NBD's dropout
+parameters ``a`` and ``b`` describe the shape of a Beta distribution over the
+probability of churning after each purchase, and they are identified only by the
+*pattern* of repeat purchases. Olist's repeaters average 1.11 repeat purchases
+each. There is nothing in the data for those two parameters to be estimated from,
+so the likelihood is flat in them and the optimiser walks off.
+
+So the Bayesian fit is not a second opinion here; it is the only fit available. Its
+priors supply the regularisation the data cannot, and it converges for exactly that
+reason. That is not evidence the Bayesian model is better — the prior is doing the
+work, and the posterior for ``a`` and ``b`` should be read as close to the prior
+rather than as something learned. :func:`fit_bgnbd_bayesian` returns the prior and
+posterior side by side so a reader can see how much moved.
 
 Validation
 ----------
@@ -42,6 +55,8 @@ story the brief invites cannot be told honestly on this data.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import logging
 import warnings
 from typing import Any
@@ -50,13 +65,20 @@ import numpy as np
 import pandas as pd
 
 __all__ = [
+    "MaximumLikelihoodError",
     "calibration_holdout",
-    "compare_implementations",
     "fit_bgnbd",
+    "fit_bgnbd_bayesian",
     "fit_gamma_gamma",
     "holdout_accuracy",
+    "maximum_likelihood_attempts",
     "summarise_repeat_behaviour",
 ]
+
+
+class MaximumLikelihoodError(RuntimeError):
+    """Raised when BG/NBD cannot be fitted by maximum likelihood on this data."""
+
 
 log = logging.getLogger(__name__)
 
@@ -101,29 +123,191 @@ def summarise_repeat_behaviour(summary: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-def fit_bgnbd(summary: pd.DataFrame, penalizer: float = 0.01) -> Any:
-    """Fit BG/NBD to the whole base with `lifetimes`.
+def fit_bgnbd(summary: pd.DataFrame, penalizer: float = 0.01, time_divisor: float = 7.0) -> Any:
+    """Fit BG/NBD by maximum likelihood with `lifetimes`, or say why it cannot be.
 
     Parameters
     ----------
     summary : pandas.DataFrame
         Needs ``frequency``, ``recency`` and ``T``.
     penalizer : float, optional
-        L2 penalty. Small but non-zero: at a 3% repeat rate the likelihood is
-        nearly flat in some directions and an unpenalised fit wanders.
+        L2 penalty on the log parameters.
+    time_divisor : float, optional
+        Divides ``recency`` and ``T``. 7 puts them in weeks, which conditions the
+        optimisation better than days.
 
     Returns
     -------
     lifetimes.BetaGeoFitter
         The fitted model.
+
+    Raises
+    ------
+    MaximumLikelihoodError
+        If the optimiser does not converge. On Olist it never does, for the reason
+        given in the module docstring, and the caller is expected to record that
+        rather than retry with different settings.
     """
     from lifetimes import BetaGeoFitter
 
     model = BetaGeoFitter(penalizer_coef=penalizer)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with (
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                model.fit(
+                    summary["frequency"],
+                    summary["recency"] / time_divisor,
+                    summary["T"] / time_divisor,
+                )
+    except Exception as error:
+        raise MaximumLikelihoodError(
+            f"BG/NBD did not converge at penalizer {penalizer} on a time divisor of "
+            f"{time_divisor}: {type(error).__name__}"
+        ) from error
+    return model
+
+
+def maximum_likelihood_attempts(
+    summary: pd.DataFrame,
+    penalizers: tuple[float, ...] = (0.0, 0.01, 0.1, 1.0, 10.0),
+    time_units: tuple[tuple[str, float], ...] = (
+        ("days", 1.0),
+        ("weeks", 7.0),
+        ("months", 30.44),
+    ),
+) -> list[dict[str, Any]]:
+    """Try every reasonable maximum-likelihood setting and record what happened.
+
+    Reported in full rather than summarised, because "the model did not converge"
+    invites the reply "did you try a bigger penalty", and the answer needs to be a
+    table rather than an assurance.
+
+    Parameters
+    ----------
+    summary : pandas.DataFrame
+        Needs ``frequency``, ``recency`` and ``T``.
+    penalizers : tuple of float, optional
+        L2 penalties to attempt.
+    time_units : tuple, optional
+        ``(name, divisor)`` pairs.
+
+    Returns
+    -------
+    list of dict
+        One entry per combination, with ``converged`` and the parameters if so.
+    """
+    attempts = []
+    for unit, divisor in time_units:
+        for penalizer in penalizers:
+            entry: dict[str, Any] = {"time_unit": unit, "penalizer": penalizer}
+            try:
+                model = fit_bgnbd(summary, penalizer=penalizer, time_divisor=divisor)
+                entry["converged"] = True
+                entry["parameters"] = {k: float(v) for k, v in model.params_.items()}
+            except MaximumLikelihoodError:
+                entry["converged"] = False
+            attempts.append(entry)
+    return attempts
+
+
+def fit_bgnbd_bayesian(
+    summary: pd.DataFrame,
+    draws: int = 1000,
+    tune: int = 1000,
+    chains: int = 4,
+    seed: int = 20260829,
+    time_divisor: float = 7.0,
+) -> tuple[Any, dict[str, Any]]:
+    """Fit BG/NBD by MCMC, and report how far the posterior moved from the prior.
+
+    The prior comparison is not decoration. Maximum likelihood fails here because
+    the dropout parameters are unidentified; the Bayesian fit succeeds because its
+    priors are proper. A parameter whose posterior sits on top of its prior has not
+    been learned from the data, and saying which ones those are is the difference
+    between using a Bayesian model and hiding behind one.
+
+    Worth knowing before reading the output: pymc-marketing parameterises dropout
+    as ``phi ~ Uniform(0, 1)`` and ``kappa ~ Pareto(alpha=1, m=1)``, with
+    ``a = phi * kappa`` and ``b = (1 - phi) * kappa``. A Pareto with alpha of one
+    has no finite mean, so the prior on ``a`` and ``b`` is extremely diffuse. If
+    the posterior on those two barely narrows, the data has told us nothing about
+    the dropout process — which is precisely what maximum likelihood was unable to
+    estimate.
+
+    Parameters
+    ----------
+    summary : pandas.DataFrame
+        Needs ``customer_unique_id``, ``frequency``, ``recency``, ``T``.
+    draws, tune, chains : int, optional
+        Sampler settings.
+    seed : int, optional
+        Reproducibility.
+    time_divisor : float, optional
+        Divides ``recency`` and ``T``; 7 gives weeks.
+
+    Returns
+    -------
+    tuple
+        The fitted model, and a dict of per-parameter prior and posterior summaries.
+    """
+    from pymc_marketing.clv import BetaGeoModel
+
+    data = pd.DataFrame(
+        {
+            "customer_id": summary["customer_unique_id"].to_numpy(),
+            "frequency": summary["frequency"].to_numpy(),
+            "recency": (summary["recency"] / time_divisor).to_numpy(),
+            "T": (summary["T"] / time_divisor).to_numpy(),
+        }
+    )
+    import pymc as pm
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        model.fit(summary["frequency"], summary["recency"], summary["T"])
-    return model
+        model = BetaGeoModel(data=data)
+        model.build_model()
+        # Drawn from the declared priors through PyMC directly. The model's own
+        # prior-predictive helper is not available on this class, and what is
+        # wanted here is the parameter prior rather than a predictive draw.
+        with model.model:
+            prior_draws = pm.sample_prior_predictive(
+                draws=1000, random_seed=seed, var_names=["a", "b", "alpha", "r"]
+            )
+        model.fit(draws=draws, tune=tune, chains=chains, random_seed=seed, progressbar=False)
+
+    posterior = model.fit_result
+    prior = prior_draws.prior
+
+    declared = {
+        name: str(value)
+        for name, value in model.model_config.items()
+        if name in ("alpha", "r", "phi_dropout", "kappa_dropout")
+    }
+    movement: dict[str, Any] = {"declared_priors": declared}
+    for name in ("a", "b", "alpha", "r"):
+        if name not in posterior:
+            continue
+        entry = {
+            "posterior_mean": float(posterior[name].mean()),
+            "posterior_sd": float(posterior[name].std()),
+            "hdi_low": float(posterior[name].quantile(0.055)),
+            "hdi_high": float(posterior[name].quantile(0.945)),
+        }
+        if prior is not None and name in prior:
+            entry["prior_mean"] = float(prior[name].mean())
+            entry["prior_sd"] = float(prior[name].std())
+            entry["sd_ratio_posterior_over_prior"] = (
+                entry["posterior_sd"] / entry["prior_sd"] if entry["prior_sd"] else None
+            )
+            entry["learned_from_data"] = bool(
+                entry["prior_sd"] and entry["posterior_sd"] < 0.5 * entry["prior_sd"]
+            )
+        movement[name] = entry
+    return model, movement
 
 
 def fit_gamma_gamma(summary: pd.DataFrame, penalizer: float = 0.01) -> tuple[Any, int]:
@@ -257,78 +441,4 @@ def holdout_accuracy(model: Any, summary: pd.DataFrame) -> dict[str, float]:
             np.mean(np.abs(predicted - actual)) < np.mean(np.abs(actual))
         ),
         "share_of_customers_predicted_below_0_1": float((predicted < 0.1).mean()),
-    }
-
-
-def compare_implementations(
-    summary: pd.DataFrame, draws: int = 1000, seed: int = 20260829
-) -> dict[str, Any]:
-    """Fit BG/NBD twice, by maximum likelihood and by MCMC, and compare.
-
-    Agreement between two independently written implementations is evidence about
-    the fit. A single implementation agreeing with itself is not.
-
-    The Bayesian fit is the one the report quotes, because it carries intervals and
-    this project's conventions require them wherever a posterior exists.
-
-    Parameters
-    ----------
-    summary : pandas.DataFrame
-        Needs ``customer_unique_id``, ``frequency``, ``recency``, ``T``.
-    draws : int, optional
-        Posterior draws.
-    seed : int, optional
-        Reproducibility.
-
-    Returns
-    -------
-    dict
-        Both parameter sets and the largest relative disagreement between them.
-    """
-    from pymc_marketing.clv import BetaGeoModel
-
-    frequentist = fit_bgnbd(summary)
-    mle = {name: float(value) for name, value in frequentist.params_.items()}
-
-    data = pd.DataFrame(
-        {
-            "customer_id": summary["customer_unique_id"].to_numpy(),
-            "frequency": summary["frequency"].to_numpy(),
-            "recency": summary["recency"].to_numpy(),
-            "T": summary["T"].to_numpy(),
-        }
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        bayesian = BetaGeoModel(data=data)
-        bayesian.build_model()
-        bayesian.fit(draws=draws, tune=draws, chains=4, random_seed=seed, progressbar=False)
-
-    posterior = bayesian.fit_result
-    bayes = {
-        name: {
-            "mean": float(posterior[name].mean()),
-            "hdi_low": float(posterior[name].quantile(0.055)),
-            "hdi_high": float(posterior[name].quantile(0.945)),
-        }
-        for name in ("a", "b", "alpha", "r")
-        if name in posterior
-    }
-
-    disagreement = {
-        name: abs(bayes[name]["mean"] / mle[name] - 1.0)
-        for name in bayes
-        if name in mle and mle[name] != 0
-    }
-    return {
-        "maximum_likelihood": mle,
-        "bayesian": bayes,
-        "relative_disagreement": disagreement,
-        "worst_relative_disagreement": max(disagreement.values()) if disagreement else None,
-        "note": (
-            "lifetimes fits by maximum likelihood; pymc-marketing fits the same model by "
-            "MCMC. Two independent implementations agreeing is evidence about the fit in a "
-            "way one implementation cannot be. The Bayesian parameters are what the report "
-            "quotes, because they carry intervals."
-        ),
     }

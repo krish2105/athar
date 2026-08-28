@@ -33,6 +33,9 @@ for noisy in ("pymc", "pymc.sampling", "pytensor"):
 #: weeks of history to predict from. Fixed before any fit was run.
 HOLDOUT_WEEKS = 16
 
+#: Draws and tuning steps per chain for the MCMC fit. Four chains.
+BAYES_DRAWS = 1000
+
 
 def main():
     processed = paths.processed_dir()
@@ -47,14 +50,40 @@ def main():
 
     behaviour = clv.summarise_repeat_behaviour(summary)
     log.info(
-        "repeat rate %.4f (%s of %s customers)",
+        "repeat rate %.4f (%s of %s customers), repeaters average %.2f repeat purchases",
         behaviour["repeat_rate"],
         f"{behaviour['repeaters']:,}",
         f"{behaviour['customers']:,}",
+        behaviour["mean_repeats_among_repeaters"],
     )
 
-    log.info("fitting BG/NBD on the full base")
-    bgnbd = clv.fit_bgnbd(summary)
+    log.info("attempting BG/NBD by maximum likelihood across every reasonable setting")
+    attempts_full = clv.maximum_likelihood_attempts(summary)
+    repeaters = summary[summary["frequency"] > 0].reset_index(drop=True)
+    attempts_repeaters = clv.maximum_likelihood_attempts(repeaters)
+    converged_full = sum(a["converged"] for a in attempts_full)
+    converged_repeaters = sum(a["converged"] for a in attempts_repeaters)
+    log.info(
+        "  full base: %d/%d converged; repeaters only: %d/%d",
+        converged_full,
+        len(attempts_full),
+        converged_repeaters,
+        len(attempts_repeaters),
+    )
+
+    log.info("fitting BG/NBD by MCMC (the only fit available on this base)")
+    bayesian, movement = clv.fit_bgnbd_bayesian(summary, draws=BAYES_DRAWS, tune=BAYES_DRAWS)
+    for name, entry in movement.items():
+        ratio = entry.get("sd_ratio_posterior_over_prior")
+        suffix = f", prior sd {entry['prior_sd']:.4f}, ratio {ratio:.3f}" if ratio else ""
+        log.info(
+            "  %s: posterior %.4f (sd %.4f)%s",
+            name,
+            entry["posterior_mean"],
+            entry["posterior_sd"],
+            suffix,
+        )
+
     gamma, repeaters_fitted = clv.fit_gamma_gamma(summary)
     log.info("Gamma-Gamma fitted on %s repeaters", f"{repeaters_fitted:,}")
 
@@ -63,8 +92,37 @@ def main():
     log.info("calibration ends %s, holdout runs to %s", cutoff.date(), observation_end.date())
 
     split = clv.calibration_holdout(orders, cutoff, observation_end)
-    calibration_model = clv.fit_bgnbd(split)
-    accuracy = clv.holdout_accuracy(calibration_model, split)
+    calibration_model, _ = clv.fit_bgnbd_bayesian(split, draws=BAYES_DRAWS, tune=BAYES_DRAWS)
+
+    horizon_weeks = float(split["holdout_weeks"].iloc[0])
+    calibration_data = pd.DataFrame(
+        {
+            "customer_id": split["customer_unique_id"].to_numpy(),
+            "frequency": split["frequency"].to_numpy(),
+            "recency": (split["recency"] / 7.0).to_numpy(),
+            "T": (split["T"] / 7.0).to_numpy(),
+        }
+    )
+    predicted = (
+        calibration_model.expected_purchases(data=calibration_data, future_t=horizon_weeks)
+        .mean(dim=("chain", "draw"))
+        .to_numpy()
+    )
+    actual = split["holdout_frequency"].to_numpy()
+    accuracy = {
+        "horizon_weeks": horizon_weeks,
+        "customers": int(len(split)),
+        "predicted_total": float(predicted.sum()),
+        "actual_total": float(actual.sum()),
+        "predicted_mean": float(predicted.mean()),
+        "actual_mean": float(actual.mean()),
+        "mean_absolute_error": float(np.mean(np.abs(predicted - actual))),
+        "mean_absolute_error_predicting_zero": float(np.mean(np.abs(actual))),
+        "beats_predicting_zero": bool(
+            np.mean(np.abs(predicted - actual)) < np.mean(np.abs(actual))
+        ),
+        "share_of_customers_predicted_below_0_1": float((predicted < 0.1).mean()),
+    }
     log.info(
         "holdout: predicted %.1f purchases, actual %.0f, MAE %.5f (predict-zero MAE %.5f)",
         accuracy["predicted_total"],
@@ -73,39 +131,57 @@ def main():
         accuracy["mean_absolute_error_predicting_zero"],
     )
 
-    log.info("cross-checking against an independent Bayesian fit")
-    comparison = clv.compare_implementations(summary, draws=1000)
-    log.info(
-        "worst relative disagreement between implementations: %.4f",
-        comparison["worst_relative_disagreement"],
+    full_data = pd.DataFrame(
+        {
+            "customer_id": summary["customer_unique_id"].to_numpy(),
+            "frequency": summary["frequency"].to_numpy(),
+            "recency": (summary["recency"] / 7.0).to_numpy(),
+            "T": (summary["T"] / 7.0).to_numpy(),
+        }
     )
-
-    # Expected lifetime value over a one-year horizon, for the customers where the
-    # monetary model can be evaluated at all.
-    horizon_days = 365.0
-    predicted_purchases = bgnbd.conditional_expected_number_of_purchases_up_to_time(
-        horizon_days, summary["frequency"], summary["recency"], summary["T"]
-    ).to_numpy()
-    repeaters = summary["frequency"] > 0
+    predicted_purchases = (
+        bayesian.expected_purchases(data=full_data, future_t=52.0)
+        .mean(dim=("chain", "draw"))
+        .to_numpy()
+    )
+    is_repeater = (summary["frequency"] > 0).to_numpy()
     expected_value = np.zeros(len(summary))
-    expected_value[repeaters.to_numpy()] = gamma.conditional_expected_average_profit(
-        summary.loc[repeaters, "frequency"], summary.loc[repeaters, "monetary"]
+    expected_value[is_repeater] = gamma.conditional_expected_average_profit(
+        summary.loc[is_repeater, "frequency"], summary.loc[is_repeater, "monetary"]
     ).to_numpy()
-
     lifetime_value = predicted_purchases * expected_value
     first_order = summary["first_order_value"].to_numpy()
 
     payload = {
         "repeat_behaviour": behaviour,
+        "maximum_likelihood": {
+            "converged_on_full_base": int(converged_full),
+            "converged_on_repeaters_only": int(converged_repeaters),
+            "attempts_full_base": attempts_full,
+            "attempts_repeaters_only": attempts_repeaters,
+            "finding": (
+                "BG/NBD does not converge by maximum likelihood on this base — at any "
+                "time scale tried (days, weeks, months), at any penalty from 0 to 10, on "
+                "the full base or on the repeaters alone. The likelihood returns NaN and "
+                "the parameters run off in log space. This is not a library defect or a "
+                "tuning problem: BG/NBD's dropout parameters describe the shape of a Beta "
+                "distribution over the probability of churning after each purchase, and "
+                "they are identified only by the pattern of repeat purchasing. Olist's "
+                "repeaters average 1.11 repeat purchases each, so there is nothing for "
+                "those parameters to be estimated from and the likelihood is flat in them."
+            ),
+        },
         "models": {
-            "bgnbd_full_base": {
+            "bgnbd_bayesian_full_base": {
                 "fitted_on": int(len(summary)),
-                "parameters": {k: float(v) for k, v in bgnbd.params_.items()},
+                "parameters": movement,
                 "note": (
-                    "Fitted on everyone, including the 96.97% with no repeat purchase. "
-                    "A long observation window with no second order is evidence about "
-                    "the churn process, not a missing value, and dropping those "
-                    "customers is the most common way a CLV analysis flatters itself."
+                    "The MCMC fit is not a second opinion here; it is the only fit "
+                    "available. Its priors supply the regularisation the data cannot, "
+                    "which is why it converges where maximum likelihood does not. A "
+                    "parameter whose posterior standard deviation is close to its prior's "
+                    "has not been learned from the data, and the ratio is reported per "
+                    "parameter so a reader can see which ones those are."
                 ),
             },
             "gamma_gamma_repeaters_only": {
@@ -115,7 +191,9 @@ def main():
                 "note": (
                     "Monetary value conditional on repeating cannot be estimated from "
                     "customers who never repeated. Every figure derived from this model "
-                    "describes 3% of the base and does not generalise to the rest."
+                    "describes 3% of the base and does not generalise to the rest. It "
+                    "converges where BG/NBD does not because it conditions on the "
+                    "repeaters and estimates a spend distribution rather than a churn one."
                 ),
             },
         },
@@ -131,9 +209,8 @@ def main():
                 "No MAPE is computed anywhere in this project."
             ),
         },
-        "cross_implementation_check": comparison,
         "lifetime_value": {
-            "horizon_days": horizon_days,
+            "horizon_weeks": 52.0,
             "mean_predicted_purchases": float(predicted_purchases.mean()),
             "median_predicted_purchases": float(np.median(predicted_purchases)),
             "share_predicted_below_0_1_purchases": float((predicted_purchases < 0.1).mean()),

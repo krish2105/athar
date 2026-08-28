@@ -14,7 +14,6 @@ wrong" from "this problem is hard".
 Run: `make triangulate`
 """
 
-import json
 import logging
 import warnings
 
@@ -210,29 +209,99 @@ def main():
     )
     log.info("wrote %s", path)
 
-    surface = processed / "allocator_surface.json"
-    surface.write_text(
-        json.dumps(
-            {
-                "channels": channels,
-                "budget": budget,
-                "observed_spend": {c: float(panel.spend[c].sum()) for c in channels},
-                "multipliers": multipliers.tolist(),
-                "true_revenue": {
-                    c: dgp.response_curve(panel, c, multipliers).tolist() for c in channels
-                },
-                "mmm_revenue": curve["median_revenue"],
-                "allocations": {
-                    name: entry["spend"] for name, entry in cost["allocations"].items()
-                },
-                "governance": cost["governance"],
-            },
-            indent=2,
-            sort_keys=True,
+    # --- the allocator artifact the dashboard reads -----------------------
+    # A genuine budget surface, not a decorative one: two channels vary across
+    # their permitted range, the remaining budget is split among the other three
+    # in proportion to their observed plan, and the height is the revenue that
+    # allocation actually earns under the true response curves. Cells where the
+    # remainder cannot satisfy the other channels' floors are infeasible and are
+    # left null rather than filled in.
+    surface_channels = ["search_nonbrand", "video_ctv"]
+    others = [c for c in channels if c not in surface_channels]
+    observed = {c: float(panel.spend[c].sum()) for c in channels}
+    floor, cap = cost["governance"]["floor_share"], cost["governance"]["cap_share"]
+    truth_curves = {
+        c: (
+            lambda spend, c=c: float(
+                dgp.response_curve(panel, c, np.array([spend / observed[c]]))[0]
+            )
         )
-        + "\n"
+        for c in channels
+    }
+
+    steps = 26
+    axis = np.linspace(floor * budget, cap * budget, steps)
+    grid = []
+    for x_spend in axis:
+        row = []
+        for y_spend in axis:
+            remainder = budget - x_spend - y_spend
+            if remainder < floor * budget * len(others) - 1e-6:
+                row.append(None)
+                continue
+            weights = np.array([observed[c] for c in others])
+            weights = weights / weights.sum()
+            split = np.clip(remainder * weights, floor * budget, cap * budget)
+            if abs(split.sum() - remainder) > 1e-6 * budget:
+                row.append(None)
+                continue
+            total = truth_curves[surface_channels[0]](x_spend) + truth_curves[surface_channels[1]](
+                y_spend
+            )
+            total += sum(truth_curves[c](value) for c, value in zip(others, split, strict=True))
+            row.append(round(float(total), 2))
+        grid.append(row)
+
+    allocator = {
+        "channels": channels,
+        "budget": budget,
+        "observed_spend": observed,
+        "governance": cost["governance"],
+        "response_curves": {
+            "multipliers": multipliers.tolist(),
+            "spend": {c: (multipliers * observed[c]).tolist() for c in channels},
+            "true_revenue": {
+                c: dgp.response_curve(panel, c, multipliers).tolist() for c in channels
+            },
+            "mmm_median_revenue": curve["median_revenue"],
+        },
+        "surface": {
+            "channels": surface_channels,
+            "axis_spend": axis.tolist(),
+            "revenue": grid,
+            "others_held": others,
+            "note": (
+                "Two channels vary across their permitted range; the remaining budget is "
+                "split among the other three in proportion to the observed plan. Height is "
+                "the revenue the whole allocation earns under the true response curves. "
+                "Null cells are infeasible: the remainder cannot meet the other channels' "
+                "floors."
+            ),
+        },
+        "allocations": {
+            name: {
+                "spend": entry["spend"],
+                "shares": entry["shares"],
+                "revenue_under_truth": entry["revenue_under_truth"],
+                "shortfall_against_best": entry["shortfall_against_best"],
+                "shortfall_share": entry["shortfall_share"],
+            }
+            for name, entry in cost["allocations"].items()
+        },
+    }
+    allocator_path = write_metric(
+        "allocator",
+        allocator,
+        Provenance(
+            source="allocation",
+            synthetic=True,
+            split="full panel",
+            seed=stored["seed"],
+            dgp_hash=stored["config_digest"],
+        ),
+        metrics,
     )
-    log.info("wrote %s for the dashboard", surface.name)
+    log.info("wrote %s", allocator_path)
     return 0
 
 
