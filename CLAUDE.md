@@ -12,10 +12,9 @@ Work here is submitted for grading and viva examination, and forms part of a pub
 
 ## This repo
 
-<!-- Replace per project -->
-**Name:** SPINE / ADIL / ATHAR / QARAR / MIZAN
-**Subject:** MAIB AI ___
-**One-line purpose:** ___
+**Name:** ATHAR
+**Subject:** MAIB AI 208 — AI in Marketing
+**One-line purpose:** Triangulated marketing incrementality stack — MMM, uplift modelling, CLV, budget allocation
 
 ---
 
