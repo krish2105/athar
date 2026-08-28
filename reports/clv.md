@@ -33,7 +33,7 @@ without changing them.
 | Max R-hat | 1.135311 |
 | Min bulk ESS | 20.23 |
 | Sampler passed | **False** |
-| Degenerate parameters | none |
+| Degenerate parameters | alpha |
 | Fit trustworthy | **False** |
 
 The MCMC fit is not a second opinion here; it is the only fit that runs at all. It should not be read as a working model. The sampler block records its divergences, and any parameter that collapsed to a point is named in degenerate_parameters — on this base `alpha` lands near 1e-306, which is the smallest number the float can hold, against a prior mean near 9. A posterior that narrow is the sampler falling into a corner, not the data speaking, and calling it a confident estimate would be the exact error this project exists to avoid.

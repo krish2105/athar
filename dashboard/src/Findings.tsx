@@ -377,6 +377,9 @@ export function ClvSection() {
   const behaviour = clv.repeat_behaviour;
   const ml = clv.maximum_likelihood;
   const value = clv.lifetime_value;
+  const validation = clv.validation;
+  const bayesian = clv.models.bgnbd_bayesian_full_base;
+  const sampler = bayesian.parameters?.sampler ?? {};
 
   return (
     <section id="clv">
@@ -413,8 +416,20 @@ export function ClvSection() {
               repeat purchasing. There is no pattern here to identify them from.
             </p>
             <p>
-              The Bayesian fit converges because its priors supply the regularisation the data
-              cannot. That is the prior doing the work, not the model being better.
+              The Bayesian fit is the only one that runs at all, and running is not the same
+              as working. Its sampler throws{" "}
+              <span className="num">{count(sampler.divergences ?? 0)}</span> divergences with
+              an R-hat of <span className="num">{sampler.max_r_hat}</span>, and{" "}
+              <span className="num">alpha</span> collapses to about{" "}
+              <span className="num">1e-306</span> — the smallest number a float can hold —
+              against a prior mean near 9. An interval that tight is the sampler falling into
+              a corner, not the data speaking.
+            </p>
+            <p>
+              And on a time-based holdout it predicts{" "}
+              <span className="num">{validation.predicted_total.toFixed(1)}</span> repeat
+              purchases against <span className="num">{count(validation.actual_total)}</span>{" "}
+              actual, losing to a baseline that predicts zero for everyone.
             </p>
           </div>
           <Reveal>
@@ -425,11 +440,15 @@ export function ClvSection() {
                 <p className="n">{count(behaviour.repeaters)} customers of {count(behaviour.customers)}</p>
               </div>
               <div className="tile">
-                <div className="k">MLE fits that converged</div>
+                <div className="k">Fits that can be believed</div>
                 <div className="v" style={{ color: "var(--signal)" }}>
                   {ml.converged_on_full_base}
                 </div>
-                <p className="n">of {ml.attempts_full_base.length} settings attempted</p>
+                <p className="n">
+                  {ml.converged_on_full_base} of {ml.attempts_full_base.length}{" "}
+                  maximum-likelihood settings converged, and the MCMC fit failed its
+                  diagnostics
+                </p>
               </div>
               <div className="tile">
                 <div className="k">Expected lifetime value</div>
@@ -448,9 +467,14 @@ export function ClvSection() {
           </Reveal>
         </div>
         <Reveal>
-          <p style={{ marginTop: "2.2rem", maxWidth: "70ch", color: "var(--ink-2)" }}>
-            {clv.finding}
-          </p>
+          <div style={{ marginTop: "2.2rem", maxWidth: "72ch" }}>
+            {clv.verdict && (
+              <p style={{ borderLeft: "2px solid var(--signal)", paddingLeft: "1rem" }}>
+                <strong>Verdict.</strong> {clv.verdict}
+              </p>
+            )}
+            <p style={{ color: "var(--ink-2)" }}>{clv.finding}</p>
+          </div>
         </Reveal>
       </div>
     </section>

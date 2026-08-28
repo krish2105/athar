@@ -172,7 +172,9 @@
   "models": {
     "bgnbd_bayesian_full_base": {
       "available": 93573,
-      "degenerate_parameters": [],
+      "degenerate_parameters": [
+        "alpha"
+      ],
       "fitted_on": 30000,
       "note": "The MCMC fit is not a second opinion here; it is the only fit that runs at all. It should not be read as a working model. The sampler block records its divergences, and any parameter that collapsed to a point is named in degenerate_parameters — on this base `alpha` lands near 1e-306, which is the smallest number the float can hold, against a prior mean near 9. A posterior that narrow is the sampler falling into a corner, not the data speaking, and calling it a confident estimate would be the exact error this project exists to avoid.",
       "parameters": {
@@ -216,7 +218,9 @@
           "phi_dropout": "Prior(\"Uniform\", lower=0, upper=1)",
           "r": "Prior(\"Weibull\", alpha=2, beta=1)"
         },
-        "degenerate_parameters": [],
+        "degenerate_parameters": [
+          "alpha"
+        ],
         "fit_is_trustworthy": false,
         "fitted_on_customers": 30000,
         "r": {
