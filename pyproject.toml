@@ -82,6 +82,14 @@ convention = "numpy"
 # doctest. An example that drifts from its code fails the suite.
 testpaths = ["tests", "src/athar"]
 addopts = "-q --cov=athar --cov-report=term-missing --doctest-modules"
+# pymc-marketing 0.19.2 deprecates the MMM class in favour of a multidimensional
+# one that provides neither of the contribution-extraction methods this project
+# needs. The version is pinned, the choice is documented in src/athar/mmm.py, and
+# the notice is silenced here so it does not bury the test output.
+filterwarnings = [
+    "ignore:.*MMM class is deprecated.*:DeprecationWarning",
+    "ignore:.*multidimensional.*:DeprecationWarning",
+]
 
 [tool.coverage.run]
 source = ["athar"]

@@ -7,14 +7,16 @@
   },
   "channels": [
     {
+      "adstock_alpha": 0.3,
       "adstock_peak_lag_weeks": 0,
+      "adstock_theta": 0.0,
       "channel": "search_brand",
-      "half_saturation": 2820.86,
+      "half_saturation": 2807.8,
       "hill_slope": 1.6,
       "lastclick_bias_absolute": 5.873196,
       "lastclick_bias_relative": 3.670747,
       "lastclick_roas": 7.473196,
-      "marginal_over_average": 0.599648,
+      "marginal_over_average": 0.59852,
       "mean_weekly_spend": 4000.0,
       "organic_capture": 0.15,
       "response_regime": "concave — saturating, the next BRL buys less than the average",
@@ -22,19 +24,19 @@
       "tracking_rate": 1.0,
       "true_incremental_revenue": 544000.0,
       "true_roi_average": 1.6,
-      "true_roi_marginal": 0.959436,
-      "weibull_scale": 1.0,
-      "weibull_shape": 0.8
+      "true_roi_marginal": 0.957632
     },
     {
+      "adstock_alpha": 0.4,
       "adstock_peak_lag_weeks": 0,
+      "adstock_theta": 0.0,
       "channel": "search_nonbrand",
-      "half_saturation": 9879.31,
+      "half_saturation": 9851.69,
       "hill_slope": 1.2,
       "lastclick_bias_absolute": 0.0,
       "lastclick_bias_relative": 0.0,
       "lastclick_roas": 2.8,
-      "marginal_over_average": 0.684675,
+      "marginal_over_average": 0.679035,
       "mean_weekly_spend": 7000.0,
       "organic_capture": 0.0,
       "response_regime": "concave — saturating, the next BRL buys less than the average",
@@ -42,19 +44,19 @@
       "tracking_rate": 1.0,
       "true_incremental_revenue": 1666000.0,
       "true_roi_average": 2.8,
-      "true_roi_marginal": 1.917091,
-      "weibull_scale": 1.2,
-      "weibull_shape": 1.0
+      "true_roi_marginal": 1.901297
     },
     {
-      "adstock_peak_lag_weeks": 0,
+      "adstock_alpha": 0.6,
+      "adstock_peak_lag_weeks": 1,
+      "adstock_theta": 1.0,
       "channel": "social_paid",
-      "half_saturation": 6667.62,
+      "half_saturation": 6684.17,
       "hill_slope": 1.4,
       "lastclick_bias_absolute": 1.983247,
       "lastclick_bias_relative": 0.944404,
       "lastclick_roas": 4.083247,
-      "marginal_over_average": 0.708039,
+      "marginal_over_average": 0.706435,
       "mean_weekly_spend": 6000.0,
       "organic_capture": 0.08,
       "response_regime": "concave — saturating, the next BRL buys less than the average",
@@ -62,19 +64,19 @@
       "tracking_rate": 0.95,
       "true_incremental_revenue": 1071000.0,
       "true_roi_average": 2.1,
-      "true_roi_marginal": 1.486882,
-      "weibull_scale": 2.0,
-      "weibull_shape": 1.6
+      "true_roi_marginal": 1.483514
     },
     {
-      "adstock_peak_lag_weeks": 1,
+      "adstock_alpha": 0.7,
+      "adstock_peak_lag_weeks": 2,
+      "adstock_theta": 2.0,
       "channel": "display_prog",
-      "half_saturation": 7134.7,
+      "half_saturation": 7159.28,
       "hill_slope": 1.0,
       "lastclick_bias_absolute": 1.072445,
       "lastclick_bias_relative": 1.191605,
       "lastclick_roas": 1.972445,
-      "marginal_over_average": 0.645282,
+      "marginal_over_average": 0.644845,
       "mean_weekly_spend": 3500.0,
       "organic_capture": 0.03,
       "response_regime": "concave — saturating, the next BRL buys less than the average",
@@ -82,19 +84,19 @@
       "tracking_rate": 0.7,
       "true_incremental_revenue": 267750.0,
       "true_roi_average": 0.9,
-      "true_roi_marginal": 0.580754,
-      "weibull_scale": 3.0,
-      "weibull_shape": 2.0
+      "true_roi_marginal": 0.580361
     },
     {
-      "adstock_peak_lag_weeks": 2,
+      "adstock_alpha": 0.8,
+      "adstock_peak_lag_weeks": 3,
+      "adstock_theta": 3.0,
       "channel": "video_ctv",
-      "half_saturation": 7325.26,
+      "half_saturation": 7346.59,
       "hill_slope": 1.8,
       "lastclick_bias_absolute": -1.700979,
       "lastclick_bias_relative": -0.680392,
       "lastclick_roas": 0.799021,
-      "marginal_over_average": 1.116668,
+      "marginal_over_average": 1.113595,
       "mean_weekly_spend": 4500.0,
       "organic_capture": 0.005,
       "response_regime": "convex — under-invested, the next BRL buys more than the average",
@@ -102,9 +104,7 @@
       "tracking_rate": 0.25,
       "true_incremental_revenue": 956250.0,
       "true_roi_average": 2.5,
-      "true_roi_marginal": 2.791669,
-      "weibull_scale": 4.0,
-      "weibull_shape": 2.5
+      "true_roi_marginal": 2.783987
     }
   ],
   "design": {
@@ -132,8 +132,8 @@
     "window_start": "2017-01-02"
   },
   "generating_specification": {
-    "adstock": "Weibull PDF, which admits a delayed peak",
-    "fitted_with": "Geometric adstock and logistic saturation, neither of which can express the generating form. The mismatch is deliberate: a model fitted to data its own functional form produced recovers its own assumptions and measures nothing. The matched-specification arm of the recovery grid exists to separate misspecification error from identification error.",
+    "adstock": "Delayed geometric: w_l proportional to alpha**((l - theta)**2), normalised, which peaks at lag theta",
+    "fitted_with": "Geometric adstock and logistic saturation. Geometric adstock is the generating kernel with theta pinned to zero, so it cannot represent a delayed peak at all, and a logistic curve cannot take the Hill shape. The mismatch is deliberate: a model fitted to data its own functional form produced recovers its own assumptions and measures nothing. The matched arm of the recovery grid separates misspecification error from identification error.",
     "saturation": "Hill"
   },
   "identification": {
@@ -177,8 +177,8 @@
     },
     "max_pairwise_correlation": 0.88808,
     "max_vif": 5.754579,
-    "media_share_of_detrended_variance": 0.166909,
-    "media_share_of_revenue_variance": 0.067751,
+    "media_share_of_detrended_variance": 0.172271,
+    "media_share_of_revenue_variance": 0.07057,
     "note": "The detrended share is the one that bounds identification. The raw share is dominated by Olist's fivefold growth across the window, which any media-mix model absorbs into its own trend and seasonality terms rather than having to explain with media.",
     "vif": {
       "display_prog": 3.207847,
@@ -190,7 +190,7 @@
   },
   "provenance": {
     "caveat": "SYNTHETIC — the channel-spend panel and every media effect in it are simulated from a pre-registered data-generating process, not measured. The revenue baseline is real Olist history; the media contribution layered on it is not. No figure here describes the effectiveness of any real marketing channel, and none may be quoted as one. What is measured is whether a method recovers a truth that is known only because it was constructed.",
-    "dgp_hash": "f4e2bfede31ba6a5",
+    "dgp_hash": "d9e7b488eb749462",
     "seed": 20260829,
     "source": "panel",
     "split": "full",

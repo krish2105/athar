@@ -27,20 +27,23 @@ correlation structure, in which every pair of channels correlates in the same
 direction — which is not what a media plan looks like. ``κ`` is the single knob
 the recovery grid turns to make the design matrix well or badly conditioned.
 
-Effect is Weibull-PDF adstock followed by a Hill curve:
+Effect is delayed-geometric adstock followed by a Hill curve:
 
 .. math::
 
     h_{c,t} = \mathrm{Hill}\!\left(\sum_{l=0}^{L-1} w_l\, s_{c,t-l};\ k_c, \nu_c\right),
+    \qquad w_l \propto \alpha_c^{(l-\theta_c)^2},
     \qquad \mathrm{Hill}(x) = \frac{x^{\nu}}{k^{\nu} + x^{\nu}}
 
 and contribution is :math:`\beta_c h_{c,t}`, with :math:`\beta_c` solved so that
 each channel's average ROI lands exactly on its pre-registered target.
 
 **The fitted model is deliberately a different model.** The MMM in
-:mod:`athar.mmm` uses geometric adstock and a logistic saturation, neither of
-which can express what generated this. Fitting the generating form to its own
-output recovers the assumptions and measures nothing; the matched-specification
+:mod:`athar.mmm` uses geometric adstock and a logistic saturation. Geometric
+adstock is this kernel with :math:`\theta` pinned to zero, so it cannot represent
+a delayed peak at all, and a logistic curve cannot take the Hill shape. Fitting
+the generating form to its own output recovers the assumptions and measures
+nothing; the matched-specification
 arm of the recovery grid exists to separate misspecification error from
 identification error, not to flatter the result.
 
@@ -93,7 +96,7 @@ __all__ = [
     "load_config",
     "marginal_roi",
     "response_curve",
-    "weibull_adstock_weights",
+    "delayed_adstock_weights",
 ]
 
 
@@ -164,26 +167,30 @@ def load_config(path: str | Path | None = None) -> DgpConfig:
     return DgpConfig(spec=yaml.safe_load(raw), digest=hashlib.sha256(raw).hexdigest()[:16])
 
 
-def weibull_adstock_weights(shape: float, scale: float, max_lag: int) -> NDArray[np.float64]:
-    r"""Normalised Weibull-PDF carryover weights.
+def delayed_adstock_weights(alpha: float, theta: float, max_lag: int) -> NDArray[np.float64]:
+    r"""Normalised delayed-geometric carryover weights.
 
     .. math::
 
-        w_l \propto \frac{k}{\lambda}\left(\frac{l+1}{\lambda}\right)^{k-1}
-                    e^{-((l+1)/\lambda)^k},
-        \qquad l = 0 \dots L-1
+        w_l \propto \alpha^{(l - \theta)^2}, \qquad l = 0 \dots L-1
 
     normalised to sum to one, so adstock redistributes spend across weeks rather
-    than inflating it. A shape above one puts the peak at a positive lag, which
-    is the behaviour geometric adstock cannot express and which the misspecified
-    fit therefore has to absorb somewhere else.
+    than inflating it. The kernel peaks at lag :math:`\theta`, which is the
+    behaviour plain geometric adstock cannot express — geometric is this kernel
+    with :math:`\theta` pinned to zero — and which the misspecified fit therefore
+    has to absorb somewhere else.
+
+    This is the same functional form as pymc-marketing's ``DelayedAdstock``,
+    implemented here in NumPy so the generator is readable and self-contained.
+    ``tests/test_dgp.py`` asserts the two agree, which makes the matched arm of the
+    recovery grid genuinely matched rather than approximately so.
 
     Parameters
     ----------
-    shape : float
-        Weibull shape. Above 1 gives a delayed peak; below 1 is front-loaded.
-    scale : float
-        Weibull scale, in weeks.
+    alpha : float
+        Decay, in (0, 1). Larger decays more slowly.
+    theta : float
+        Peak lag, in weeks.
     max_lag : int
         Number of lags retained.
 
@@ -195,30 +202,33 @@ def weibull_adstock_weights(shape: float, scale: float, max_lag: int) -> NDArray
     Raises
     ------
     ValueError
-        If ``shape`` or ``scale`` is not positive, or ``max_lag`` is below 1.
+        If ``alpha`` is outside (0, 1), ``theta`` is negative, or ``max_lag`` is
+        below 1.
 
     Examples
     --------
-    Weights sum to one, and a shape above one peaks away from lag zero:
+    Weights sum to one, and the peak sits at ``theta``:
 
-    >>> weights = weibull_adstock_weights(2.5, 4.0, 8)
+    >>> weights = delayed_adstock_weights(0.8, 3, 8)
     >>> round(float(weights.sum()), 12)
     1.0
     >>> int(weights.argmax())
-    2
+    3
 
-    A shape below one decays immediately:
+    With ``theta`` at zero the kernel is front-loaded, like plain geometric:
 
-    >>> int(weibull_adstock_weights(0.8, 1.0, 8).argmax())
+    >>> int(delayed_adstock_weights(0.3, 0, 8).argmax())
     0
     """
-    if shape <= 0 or scale <= 0:
-        raise ValueError(f"shape and scale must be positive, got {shape} and {scale}")
+    if not 0.0 < alpha < 1.0:
+        raise ValueError(f"alpha must lie in (0, 1), got {alpha}")
+    if theta < 0:
+        raise ValueError(f"theta must be non-negative, got {theta}")
     if max_lag < 1:
         raise ValueError(f"max_lag must be at least 1, got {max_lag}")
-    lags = np.arange(1, max_lag + 1, dtype=np.float64)
-    density = (shape / scale) * (lags / scale) ** (shape - 1.0) * np.exp(-((lags / scale) ** shape))
-    return density / density.sum()
+    lags = np.arange(max_lag, dtype=np.float64)
+    weights = np.power(float(alpha), (lags - float(theta)) ** 2)
+    return weights / weights.sum()
 
 
 def apply_adstock(spend: NDArray[np.float64], weights: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -817,8 +827,8 @@ def generate_panel(
         # week zero is consistent with the weeks that follow.
         series = series * (channel["mean_weekly_spend"] / series[burn:].mean())
 
-        weights = weibull_adstock_weights(
-            channel["weibull"]["shape"], channel["weibull"]["scale"], max_lag
+        weights = delayed_adstock_weights(
+            channel["delayed"]["alpha"], channel["delayed"]["theta"], max_lag
         )
         full_spend[name] = series
         spend_columns[name] = series[burn:]
@@ -850,11 +860,11 @@ def generate_panel(
             "beta": beta,
             "half_saturation": half_saturation,
             "hill_slope": slope,
-            "adstock_weights": weibull_adstock_weights(
-                channel["weibull"]["shape"], channel["weibull"]["scale"], max_lag
+            "adstock_weights": delayed_adstock_weights(
+                channel["delayed"]["alpha"], channel["delayed"]["theta"], max_lag
             ).tolist(),
-            "weibull_shape": float(channel["weibull"]["shape"]),
-            "weibull_scale": float(channel["weibull"]["scale"]),
+            "adstock_alpha": float(channel["delayed"]["alpha"]),
+            "adstock_theta": float(channel["delayed"]["theta"]),
             "total_spend": total_spend,
             "mean_weekly_spend": float(spend[name].mean()),
             "tracking_rate": float(channel["attribution"]["tracking_rate"]),

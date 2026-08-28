@@ -109,8 +109,8 @@ def main():
                 "lastclick_bias_relative": round(block["attribution_bias_relative"], 6),
                 "tracking_rate": block["tracking_rate"],
                 "organic_capture": block["organic_capture"],
-                "weibull_shape": block["weibull_shape"],
-                "weibull_scale": block["weibull_scale"],
+                "adstock_alpha": block["adstock_alpha"],
+                "adstock_theta": block["adstock_theta"],
                 "adstock_peak_lag_weeks": int(np.argmax(block["adstock_weights"])),
                 "hill_slope": block["hill_slope"],
                 "half_saturation": round(block["half_saturation"], 2),
@@ -143,14 +143,19 @@ def main():
             ),
         },
         "generating_specification": {
-            "adstock": "Weibull PDF, which admits a delayed peak",
+            "adstock": (
+                "Delayed geometric: w_l proportional to alpha**((l - theta)**2), "
+                "normalised, which peaks at lag theta"
+            ),
             "saturation": "Hill",
             "fitted_with": (
-                "Geometric adstock and logistic saturation, neither of which can express "
-                "the generating form. The mismatch is deliberate: a model fitted to data "
-                "its own functional form produced recovers its own assumptions and "
-                "measures nothing. The matched-specification arm of the recovery grid "
-                "exists to separate misspecification error from identification error."
+                "Geometric adstock and logistic saturation. Geometric adstock is the "
+                "generating kernel with theta pinned to zero, so it cannot represent a "
+                "delayed peak at all, and a logistic curve cannot take the Hill shape. "
+                "The mismatch is deliberate: a model fitted to data its own functional "
+                "form produced recovers its own assumptions and measures nothing. The "
+                "matched arm of the recovery grid separates misspecification error from "
+                "identification error."
             ),
         },
         "identification": {

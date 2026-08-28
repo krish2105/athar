@@ -1,0 +1,307 @@
+{
+  "cost": {
+    "note": "The revenue share switched off is the price of the estimate. A design large enough to be precise is a design that turned advertising off across a meaningful share of the business for two months, for one channel. That is why experiments are the estimator nobody runs often enough, and why the other two exist at all."
+  },
+  "design": {
+    "assumption": "Media contribution is allocated across states in proportion to each state's share of real revenue. Olist carries no spend data, so regional response heterogeneity cannot be known. That makes this experiment look better behaved than a real one, and the direction of the optimism is stated so it is not mistaken for realism.",
+    "detected_criterion": "the estimate has the right sign and lands within half the true effect. A blunt rule, chosen before the numbers were seen and reported as it is, rather than a p-value that would imply a testing framework this design does not have.",
+    "estimator": "difference in differences, treated states against the rest",
+    "replicates_per_point": 60,
+    "test_weeks": 8,
+    "treated_state_counts": [
+      3,
+      5,
+      8,
+      13
+    ]
+  },
+  "geography": {
+    "largest_state_share": 0.3808487805355059,
+    "source": "real Olist customer_state distribution",
+    "states": 27,
+    "states_below_one_percent": 13,
+    "top_five_share": 0.7373202981625774
+  },
+  "headline_experiments": {
+    "display_prog": {
+      "absolute_error": -1293.2294898158543,
+      "estimated_removed_revenue": 7791.173938003136,
+      "implied_roi": 1.3079005213251422,
+      "relative_error": -0.1423571178989721,
+      "spend_withheld": 5957.008052958992,
+      "test_weeks": 8,
+      "treated_revenue_share": 0.49840788268752245,
+      "treated_states": 13,
+      "true_removed_revenue": 9084.40342781899,
+      "true_roi": 0.9000000000000001
+    },
+    "search_brand": {
+      "absolute_error": 6233.699537858531,
+      "estimated_removed_revenue": 17072.15153954795,
+      "implied_roi": 3.2722256357888084,
+      "relative_error": 0.5751466664138813,
+      "spend_withheld": 5217.290443796828,
+      "test_weeks": 8,
+      "treated_revenue_share": 0.2737935955051192,
+      "treated_states": 13,
+      "true_removed_revenue": 10838.45200168942,
+      "true_roi": 1.6000000000000003
+    },
+    "search_nonbrand": {
+      "absolute_error": 4340.473162676637,
+      "estimated_removed_revenue": 43168.725214976585,
+      "implied_roi": 3.7336706014393384,
+      "relative_error": 0.11178646818379079,
+      "spend_withheld": 11562.006888967373,
+      "test_weeks": 8,
+      "treated_revenue_share": 0.5740868400718101,
+      "treated_states": 13,
+      "true_removed_revenue": 38828.25205229995,
+      "true_roi": 2.800000000000001
+    },
+    "social_paid": {
+      "absolute_error": 6366.772741148565,
+      "estimated_removed_revenue": 35837.94802815677,
+      "implied_roi": 2.8511195916100385,
+      "relative_error": 0.21603389342790247,
+      "spend_withheld": 12569.780704259738,
+      "test_weeks": 8,
+      "treated_revenue_share": 0.7107956629552536,
+      "treated_states": 13,
+      "true_removed_revenue": 29471.175287008202,
+      "true_roi": 2.100000000000001
+    },
+    "video_ctv": {
+      "absolute_error": -133.49647281576472,
+      "estimated_removed_revenue": 30637.074765209574,
+      "implied_roi": 1.8566683570493563,
+      "relative_error": -0.0043384463610735,
+      "spend_withheld": 16501.10244454128,
+      "test_weeks": 8,
+      "treated_revenue_share": 0.47745043688358096,
+      "treated_states": 13,
+      "true_removed_revenue": 30770.57123802534,
+      "true_roi": 2.5
+    }
+  },
+  "power": {
+    "display_prog": [
+      {
+        "detected": 0.23333333333333334,
+        "estimate_sd": 5749.746035546863,
+        "mean_relative_error": 0.19557961405542762,
+        "median_relative_error": 0.08096633337279552,
+        "median_treated_revenue_share": 0.06309776370630281,
+        "relative_error_sd": 1.5364706978248657,
+        "replicates": 60,
+        "treated_states": 3
+      },
+      {
+        "detected": 0.2,
+        "estimate_sd": 8138.277279412078,
+        "mean_relative_error": 0.2410250238562189,
+        "median_relative_error": 0.431158021999286,
+        "median_treated_revenue_share": 0.15726624359622599,
+        "relative_error_sd": 1.3987215919371323,
+        "replicates": 60,
+        "treated_states": 5
+      },
+      {
+        "detected": 0.3333333333333333,
+        "estimate_sd": 7839.41478506318,
+        "mean_relative_error": 0.2754182342844242,
+        "median_relative_error": 0.1332296074308087,
+        "median_treated_revenue_share": 0.24769547800481784,
+        "relative_error_sd": 1.0657231638542406,
+        "replicates": 60,
+        "treated_states": 8
+      },
+      {
+        "detected": 0.4,
+        "estimate_sd": 11768.710753153948,
+        "mean_relative_error": 0.045504784300483776,
+        "median_relative_error": -0.041857460947546,
+        "median_treated_revenue_share": 0.4578798690224782,
+        "relative_error_sd": 1.14506578410266,
+        "replicates": 60,
+        "treated_states": 13
+      }
+    ],
+    "search_brand": [
+      {
+        "detected": 0.5833333333333334,
+        "estimate_sd": 8197.83246184318,
+        "mean_relative_error": 0.08998821725101687,
+        "median_relative_error": 0.036953170882724706,
+        "median_treated_revenue_share": 0.06309776370630281,
+        "relative_error_sd": 0.7069824303030979,
+        "replicates": 60,
+        "treated_states": 3
+      },
+      {
+        "detected": 0.5333333333333333,
+        "estimate_sd": 9885.586115862663,
+        "mean_relative_error": 0.1108508774495192,
+        "median_relative_error": 0.1982730201853672,
+        "median_treated_revenue_share": 0.15726624359622599,
+        "relative_error_sd": 0.6434781332213089,
+        "replicates": 60,
+        "treated_states": 5
+      },
+      {
+        "detected": 0.6333333333333333,
+        "estimate_sd": 10388.794384195584,
+        "mean_relative_error": 0.1267703977925448,
+        "median_relative_error": 0.06155073852462667,
+        "median_treated_revenue_share": 0.24769547800481784,
+        "relative_error_sd": 0.490400203340064,
+        "replicates": 60,
+        "treated_states": 8
+      },
+      {
+        "detected": 0.7,
+        "estimate_sd": 13353.624409477805,
+        "mean_relative_error": 0.020924311880295348,
+        "median_relative_error": -0.019111434168287922,
+        "median_treated_revenue_share": 0.4578798690224782,
+        "relative_error_sd": 0.5268201880200023,
+        "replicates": 60,
+        "treated_states": 13
+      }
+    ],
+    "search_nonbrand": [
+      {
+        "detected": 0.7833333333333333,
+        "estimate_sd": 12095.842367831827,
+        "mean_relative_error": 0.052620855784464245,
+        "median_relative_error": 0.021377510347623696,
+        "median_treated_revenue_share": 0.06309776370630281,
+        "relative_error_sd": 0.41343800025140254,
+        "replicates": 60,
+        "treated_states": 3
+      },
+      {
+        "detected": 0.7833333333333333,
+        "estimate_sd": 13547.67103695779,
+        "mean_relative_error": 0.06478401471647666,
+        "median_relative_error": 0.11585818047034868,
+        "median_treated_revenue_share": 0.15726624359622599,
+        "relative_error_sd": 0.3762079435755968,
+        "replicates": 60,
+        "treated_states": 5
+      },
+      {
+        "detected": 0.9,
+        "estimate_sd": 14783.682537900018,
+        "mean_relative_error": 0.0741659469990585,
+        "median_relative_error": 0.03618456017117011,
+        "median_treated_revenue_share": 0.24769547800481784,
+        "relative_error_sd": 0.28680144148020936,
+        "replicates": 60,
+        "treated_states": 8
+      },
+      {
+        "detected": 0.8666666666666667,
+        "estimate_sd": 16851.613451765137,
+        "mean_relative_error": 0.012225616477626858,
+        "median_relative_error": -0.011061924167367676,
+        "median_treated_revenue_share": 0.4578798690224782,
+        "relative_error_sd": 0.30803166425898926,
+        "replicates": 60,
+        "treated_states": 13
+      }
+    ],
+    "social_paid": [
+      {
+        "detected": 0.6,
+        "estimate_sd": 8442.823903732258,
+        "mean_relative_error": 0.08591126129816039,
+        "median_relative_error": 0.03525379261660688,
+        "median_treated_revenue_share": 0.06309776370630281,
+        "relative_error_sd": 0.6749553321818184,
+        "replicates": 60,
+        "treated_states": 3
+      },
+      {
+        "detected": 0.5833333333333334,
+        "estimate_sd": 10094.023355108071,
+        "mean_relative_error": 0.10582476474372816,
+        "median_relative_error": 0.1892811711975515,
+        "median_treated_revenue_share": 0.15726624359622599,
+        "relative_error_sd": 0.6143176784289648,
+        "replicates": 60,
+        "treated_states": 5
+      },
+      {
+        "detected": 0.65,
+        "estimate_sd": 10656.872957548994,
+        "mean_relative_error": 0.12103100329445328,
+        "median_relative_error": 0.058783168437243294,
+        "median_treated_revenue_share": 0.24769547800481784,
+        "relative_error_sd": 0.4681866022201384,
+        "replicates": 60,
+        "treated_states": 8
+      },
+      {
+        "detected": 0.7166666666666667,
+        "estimate_sd": 13546.03950924845,
+        "mean_relative_error": 0.019975243050917572,
+        "median_relative_error": -0.018233194538084474,
+        "median_treated_revenue_share": 0.4578798690224782,
+        "relative_error_sd": 0.5029493133888331,
+        "replicates": 60,
+        "treated_states": 13
+      }
+    ],
+    "video_ctv": [
+      {
+        "detected": 0.7666666666666667,
+        "estimate_sd": 11634.497891669931,
+        "mean_relative_error": 0.05522891719471588,
+        "median_relative_error": 0.022464616249306846,
+        "median_treated_revenue_share": 0.06309776370630281,
+        "relative_error_sd": 0.4339259719011762,
+        "replicates": 60,
+        "treated_states": 3
+      },
+      {
+        "detected": 0.7833333333333333,
+        "estimate_sd": 13086.114616679186,
+        "mean_relative_error": 0.06799925931149235,
+        "median_relative_error": 0.12161033836045987,
+        "median_treated_revenue_share": 0.15726624359622599,
+        "relative_error_sd": 0.3948620994522746,
+        "replicates": 60,
+        "treated_states": 5
+      },
+      {
+        "detected": 0.9,
+        "estimate_sd": 14253.075850861886,
+        "mean_relative_error": 0.07783748367538343,
+        "median_relative_error": 0.03795499694521143,
+        "median_treated_revenue_share": 0.24769547800481784,
+        "relative_error_sd": 0.30101163872655295,
+        "replicates": 60,
+        "treated_states": 8
+      },
+      {
+        "detected": 0.85,
+        "estimate_sd": 16398.766312328284,
+        "mean_relative_error": 0.01283274341698706,
+        "median_relative_error": -0.011623741100138585,
+        "median_treated_revenue_share": 0.4578798690224782,
+        "relative_error_sd": 0.32330203498528165,
+        "replicates": 60,
+        "treated_states": 13
+      }
+    ]
+  },
+  "provenance": {
+    "caveat": "SYNTHETIC — the channel-spend panel and every media effect in it are simulated from a pre-registered data-generating process, not measured. The revenue baseline is real Olist history; the media contribution layered on it is not. No figure here describes the effectiveness of any real marketing channel, and none may be quoted as one. What is measured is whether a method recovers a truth that is known only because it was constructed.",
+    "dgp_hash": "d9e7b488eb749462",
+    "seed": 20260829,
+    "source": "geo-experiment",
+    "split": "holdout window",
+    "synthetic": true
+  }
+}

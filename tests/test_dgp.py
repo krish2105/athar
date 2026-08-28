@@ -60,22 +60,51 @@ def test_adstock_is_linear_which_the_response_curve_depends_on():
     """
     rng = np.random.default_rng(3)
     spend = rng.gamma(4.0, 900.0, 40)
-    weights = dgp.weibull_adstock_weights(2.2, 3.0, 8)
+    weights = dgp.delayed_adstock_weights(0.7, 2, 8)
     assert np.allclose(
         dgp.apply_adstock(3.7 * spend, weights), 3.7 * dgp.apply_adstock(spend, weights)
     )
 
 
-def test_weibull_adstock_can_peak_away_from_lag_zero():
+def test_delayed_adstock_can_peak_away_from_lag_zero():
     """Geometric adstock cannot, which is the deliberate misspecification."""
-    assert dgp.weibull_adstock_weights(2.5, 4.0, 8).argmax() > 0
-    assert dgp.weibull_adstock_weights(0.8, 1.0, 8).argmax() == 0
+    assert dgp.delayed_adstock_weights(0.8, 3, 8).argmax() == 3
+    assert dgp.delayed_adstock_weights(0.3, 0, 8).argmax() == 0
 
 
-@pytest.mark.parametrize(("shape", "scale"), [(0.0, 1.0), (1.0, 0.0), (-1.0, 1.0)])
-def test_weibull_rejects_non_positive_parameters(shape, scale):
-    with pytest.raises(ValueError, match="must be positive"):
-        dgp.weibull_adstock_weights(shape, scale, 8)
+@pytest.mark.parametrize(("alpha", "theta"), [(0.0, 1.0), (1.0, 1.0), (-0.1, 1.0), (0.5, -1.0)])
+def test_delayed_adstock_rejects_impossible_parameters(alpha, theta):
+    with pytest.raises(ValueError):
+        dgp.delayed_adstock_weights(alpha, theta, 8)
+
+
+def test_generator_kernel_matches_pymc_marketing_exactly():
+    """The matched arm is matched, not merely close.
+
+    The generator implements the delayed-geometric kernel in NumPy so it is
+    readable and self-contained. If that implementation drifted from
+    pymc-marketing's `DelayedAdstock`, the "matched" arm of the recovery grid would
+    silently become another misspecified one, and the decomposition of error into
+    misspecification and identification would mean nothing.
+    """
+    import numpy as np
+    import pytensor
+    import xarray as xr
+    from pymc_marketing.mmm.transformers import delayed_adstock
+
+    max_lag = 8
+    for alpha, theta in [(0.3, 0), (0.6, 1), (0.8, 3)]:
+        spend = np.zeros(20)
+        spend[5] = 1.0  # an impulse: the response IS the kernel
+        impulse = xr.DataArray(spend, dims=["date"])
+        library = pytensor.function(
+            [],
+            delayed_adstock(
+                impulse, alpha=alpha, theta=theta, l_max=max_lag, normalize=True, dim="date"
+            ).values,
+        )()
+        ours = dgp.apply_adstock(spend, dgp.delayed_adstock_weights(alpha, theta, max_lag))
+        assert np.allclose(ours[5 : 5 + max_lag], library[5 : 5 + max_lag], atol=1e-12)
 
 
 # --- the truth --------------------------------------------------------------

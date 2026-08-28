@@ -96,13 +96,23 @@ collinearity:
   # the fixed total. Only its persistence is a free parameter.
   idiosyncratic: {ar_phi: 0.40}
 
-# Adstock is generated with a Weibull PDF kernel, which admits a delayed peak.
-# The MMM is fitted with geometric adstock, which cannot. That mismatch is
-# deliberate: a model fitted to data its own functional form generated recovers
-# its own assumptions and measures nothing. The matched-specification arm of the
-# recovery grid fits WeibullPDFAdstock + HillSaturation instead, so the error
-# attributable to misspecification can be separated from the error attributable
-# to identification.
+# Adstock is generated with a delayed geometric kernel,
+#
+#     w_l  proportional to  alpha ** ((l - theta) ** 2),   l = 0 .. max_lag-1
+#
+# normalised to sum to one. It peaks at lag theta, so a channel's effect can
+# build before it decays. The MMM's misspecified arm is fitted with plain
+# geometric adstock, which is this kernel with theta pinned to zero and therefore
+# cannot express a delayed peak at all.
+#
+# The kernel was originally a Weibull PDF. It is not, because WeibullPDFAdstock
+# raises `TypeError: x must be have an XTensorType` under pymc-marketing 0.19.2
+# with pytensor 2.38.2 — a library defect, reproduced and recorded in
+# metrics/env_gate.json. WeibullCDFAdstock samples cleanly but its kernel is a
+# survival curve, monotonically decaying, so it cannot represent a delayed peak
+# either. The delayed geometric form is the one that both admits a delayed peak
+# and can actually be fitted, which is what the matched arm of the recovery grid
+# needs in order to be genuinely matched rather than merely close.
 adstock:
   max_lag: 8
 
@@ -132,7 +142,7 @@ channels:
     true_roi: 1.6
     loading: {budget_pressure: 0.90, funnel_tilt: -0.60}
     flighting: {period_weeks: 0, amplitude: 0.00}
-    weibull: {shape: 0.80, scale: 1.0}
+    delayed: {alpha: 0.30, theta: 0}
     hill: {half_saturation_multiple: 0.70, slope: 1.6}
     attribution: {tracking_rate: 1.00, organic_capture: 0.15}
 
@@ -141,7 +151,7 @@ channels:
     true_roi: 2.8
     loading: {budget_pressure: 1.00, funnel_tilt: 0.50}
     flighting: {period_weeks: 0, amplitude: 0.00}
-    weibull: {shape: 1.00, scale: 1.2}
+    delayed: {alpha: 0.40, theta: 0}
     hill: {half_saturation_multiple: 1.40, slope: 1.2}
     attribution: {tracking_rate: 1.00, organic_capture: 0.00}
 
@@ -150,7 +160,7 @@ channels:
     true_roi: 2.1
     loading: {budget_pressure: 1.00, funnel_tilt: 0.40}
     flighting: {period_weeks: 0, amplitude: 0.00}
-    weibull: {shape: 1.60, scale: 2.0}
+    delayed: {alpha: 0.60, theta: 1}
     hill: {half_saturation_multiple: 1.10, slope: 1.4}
     attribution: {tracking_rate: 0.95, organic_capture: 0.08}
 
@@ -162,7 +172,7 @@ channels:
     true_roi: 0.9
     loading: {budget_pressure: 0.80, funnel_tilt: -0.30}
     flighting: {period_weeks: 13, amplitude: 0.50}
-    weibull: {shape: 2.00, scale: 3.0}
+    delayed: {alpha: 0.70, theta: 2}
     hill: {half_saturation_multiple: 2.00, slope: 1.0}
     attribution: {tracking_rate: 0.70, organic_capture: 0.03}
 
@@ -171,6 +181,6 @@ channels:
     true_roi: 2.5
     loading: {budget_pressure: 0.70, funnel_tilt: -0.70}
     flighting: {period_weeks: 17, amplitude: 0.70}
-    weibull: {shape: 2.50, scale: 4.0}
+    delayed: {alpha: 0.80, theta: 3}
     hill: {half_saturation_multiple: 1.60, slope: 1.8}
     attribution: {tracking_rate: 0.25, organic_capture: 0.005}
