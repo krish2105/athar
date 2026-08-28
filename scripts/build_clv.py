@@ -74,6 +74,8 @@ def main():
     log.info("fitting BG/NBD by MCMC (the only fit available on this base)")
     bayesian, movement = clv.fit_bgnbd_bayesian(summary, draws=BAYES_DRAWS, tune=BAYES_DRAWS)
     for name, entry in movement.items():
+        if name == "declared_priors":
+            continue
         ratio = entry.get("sd_ratio_posterior_over_prior")
         suffix = f", prior sd {entry['prior_sd']:.4f}, ratio {ratio:.3f}" if ratio else ""
         log.info(

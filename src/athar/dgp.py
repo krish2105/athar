@@ -570,22 +570,36 @@ def marginal_roi(panel: Panel, channel: str, multiplier: float = 1.0) -> float:
 
 
 def extended_baseline(
-    observed: NDArray[np.float64], weeks: int, rng: np.random.Generator
+    observed: NDArray[np.float64],
+    weeks: int,
+    rng: np.random.Generator,
+    damping: float = 0.92,
+    match_level: bool = True,
 ) -> tuple[NDArray[np.float64], dict[str, float]]:
     """Simulate a baseline of arbitrary length in the shape of the observed one.
 
-    The recovery grid compares an 85-week panel against a 156-week panel, and
-    Olist supplies only 85. Tiling the real series would fabricate a history;
-    switching baselines between the two arms would confound length with baseline.
-    So *both* arms of the grid use a simulated baseline from this function, and
-    only the headline fit uses the real series. Length is then the only thing
-    that changes across the length axis.
+    The recovery grid compares an 85-week panel against a 156-week panel, and Olist
+    supplies only 85. Tiling the real series would fabricate a history; switching
+    baselines between the two arms would confound length with baseline. So *both*
+    arms of the grid use a simulated baseline from this function, and only the
+    headline fit uses the real series. Length is then the only thing that changes
+    along the length axis.
 
     The model is a log-linear trend, one annual Fourier pair, and an AR(1)
     residual. One harmonic, not three: 85 weeks is 1.6 years and will not support
-    more without fitting noise. What this reproduces is the trend, the broad
-    annual shape and the residual persistence — not Black Friday, which Olist has
-    and this does not.
+    more without fitting noise.
+
+    **The trend is damped beyond the observed window**, and it has to be. Olist grew
+    roughly fivefold across 85 weeks; extrapolating that rate undamped for 156 weeks
+    implies a nineteen-fold rise, which inflates the series' spread so far that the
+    observation noise — scaled to the detrended standard deviation — drives the
+    early weeks negative. That is not a hypothetical: it stopped the recovery grid
+    at cell 35 with exactly that error. A damped trend is the standard remedy for
+    extrapolation for the same underlying reason, which is that undamped
+    exponential growth is not a forecast anyone believes.
+
+    Damping applies only *past* the observed length, so the in-sample stretch stays
+    faithful to Olist and the 85-week arm is unaffected by it.
 
     Parameters
     ----------
@@ -595,12 +609,28 @@ def extended_baseline(
         Length to simulate.
     rng : numpy.random.Generator
         Seeded generator.
+    damping : float, optional
+        Per-week damping applied to the trend beyond ``len(observed)``. 1.0 is no
+        damping.
+    match_level : bool, optional
+        Rescale the simulated series so its mean equals the observed series'.
+
+        This is what makes the two length arms comparable. Without it the longer
+        arm sits at a higher level — it has had longer to grow — and log-residuals
+        of the same relative size produce larger absolute swings, so the media
+        contribution is a smaller share of the variance purely because the panel is
+        long. Measured across five seeds: media accounted for 9.1% of detrended
+        variance at 85 weeks and 1.3% at 156. That is the length axis standing in
+        for signal strength, which would have made the comparison meaningless.
+
+        The question the arm exists to answer is "what if I had more of the same
+        data", not "what if the business had grown for another eighteen months".
 
     Returns
     -------
     tuple of (numpy.ndarray, dict)
-        The simulated baseline and the fit diagnostics, including the R-squared
-        of the deterministic part and the residual AR(1) coefficient.
+        The simulated baseline and the fit diagnostics, including the R-squared of
+        the deterministic part and the residual AR(1) coefficient.
 
     Raises
     ------
@@ -611,36 +641,51 @@ def extended_baseline(
     if np.any(observed <= 0):
         raise ValueError("baseline extension needs a strictly positive revenue series")
 
-    period = 52.18  # weeks in a year, so the harmonic does not drift over 3 years
+    period = 52.18  # weeks in a year, so the harmonic does not drift over three years
     index = np.arange(len(observed), dtype=np.float64)
 
-    def design(positions: NDArray[np.float64]) -> NDArray[np.float64]:
+    def seasonal(positions: NDArray[np.float64]) -> NDArray[np.float64]:
         return np.column_stack(
             [
                 np.ones_like(positions),
-                positions,
                 np.cos(2 * np.pi * positions / period),
                 np.sin(2 * np.pi * positions / period),
             ]
         )
 
+    def damped_time(positions: NDArray[np.float64], observed_length: int) -> NDArray[np.float64]:
+        """Effective elapsed time, damped past the observed window."""
+        elapsed = np.minimum(positions, observed_length)
+        beyond = np.maximum(positions - observed_length, 0.0)
+        # Sum of a geometric series: each week past the window counts for less.
+        extra = np.where(
+            beyond > 0,
+            damping * (1.0 - damping**beyond) / (1.0 - damping) if damping < 1.0 else beyond,
+            0.0,
+        )
+        return elapsed + extra
+
     logged = np.log(observed)
-    matrix = design(index)
+    matrix = np.column_stack([seasonal(index), index])
     coefficients, *_ = np.linalg.lstsq(matrix, logged, rcond=None)
-    fitted = matrix @ coefficients
-    residual = logged - fitted
+    residual = logged - matrix @ coefficients
 
     phi = float(np.corrcoef(residual[:-1], residual[1:])[0, 1])
     residual_sd = float(residual.std(ddof=1))
     r_squared = float(1.0 - residual.var(ddof=1) / logged.var(ddof=1))
 
     future = np.arange(weeks, dtype=np.float64)
-    simulated = design(future) @ coefficients + _ar1(rng, weeks, phi, residual_sd)
-    return np.exp(simulated), {
+    design = np.column_stack([seasonal(future), damped_time(future, len(observed))])
+    simulated = np.exp(design @ coefficients + _ar1(rng, weeks, phi, residual_sd))
+    if match_level:
+        simulated = simulated * (observed.mean() / simulated.mean())
+    return simulated, {
         "r_squared": round(r_squared, 6),
         "residual_ar1": round(phi, 6),
         "residual_sd_log": round(residual_sd, 6),
-        "trend_per_week_log": round(float(coefficients[1]), 8),
+        "trend_per_week_log": round(float(coefficients[3]), 8),
+        "trend_damping_beyond_window": damping,
+        "level_matched_to_observed": match_level,
     }
 
 
@@ -707,6 +752,7 @@ def generate_panel(
     collinearity: str | float | None = None,
     seed: int | None = None,
     week_index: pd.DatetimeIndex | None = None,
+    noise_sd: float | None = None,
 ) -> Panel:
     """Generate one panel and the truth it will later be scored against.
 
@@ -742,6 +788,17 @@ def generate_panel(
     week_index : pandas.DatetimeIndex, optional
         Weeks to label the panel with. Defaults to Mondays from 2017-01-02, the
         start of the Olist window.
+    noise_sd : float, optional
+        Observation-noise standard deviation, in revenue units. Defaults to the
+        configured share of *this* baseline's detrended standard deviation.
+
+        The recovery grid passes it explicitly, computed once from the real Olist
+        series, and it should. Observation noise is a property of the measurement
+        process, not of how long you observe for — but a simulated baseline
+        extrapolated to 156 weeks has a much larger spread than one of 85 weeks, so
+        deriving the noise from it would make the long arm noisier purely by virtue
+        of being long. That confounds the length axis, and at the extreme it drove
+        early-week revenue negative and stopped the grid outright.
 
     Returns
     -------
@@ -879,7 +936,12 @@ def generate_panel(
     observation_noise = rng.normal(0.0, noise_sd, n_weeks)
     revenue = baseline + contribution.sum(axis=1).to_numpy() + observation_noise
     if np.any(revenue <= 0):
-        raise ValueError("generated revenue went non-positive; the noise level is implausible")
+        raise ValueError(
+            f"generated revenue went non-positive over {n_weeks} weeks: the noise "
+            f"standard deviation of {noise_sd:,.0f} is too large for a baseline whose "
+            f"minimum is {baseline.min():,.0f}. Pass noise_sd explicitly rather than "
+            f"deriving it from a baseline that has been extrapolated."
+        )
 
     panel = Panel(
         weeks=pd.DatetimeIndex(weeks),

@@ -52,6 +52,12 @@ SEEDS = (20260829, 20260830, 20260831, 20260901, 20260902)
 
 DRAWS, TUNE, CHAINS = 1000, 1000, 4
 
+#: Bumped whenever a change alters what a cell computes, so cached results from an
+#: earlier definition are not silently mixed with new ones. Version 2 fixed the
+#: observation-noise scale, which previously grew with panel length and therefore
+#: confounded the length axis.
+GRID_VERSION = 2
+
 
 def cell_key(weeks, collinearity, specification, seed, digest):
     """A stable identity for one cell, so a resumed run reuses exactly what it ran."""
@@ -62,6 +68,7 @@ def cell_key(weeks, collinearity, specification, seed, digest):
             "specification": specification,
             "seed": seed,
             "digest": digest,
+            "grid_version": GRID_VERSION,
             "draws": DRAWS,
             "tune": TUNE,
             "chains": CHAINS,
@@ -71,13 +78,18 @@ def cell_key(weeks, collinearity, specification, seed, digest):
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
-def run_cell(config, baseline_source, weeks, collinearity, specification, seed):
+def run_cell(config, baseline_source, weeks, collinearity, specification, seed, noise_sd):
     """Generate one panel, fit one model, score it against the truth it never saw."""
     rng = np.random.default_rng(seed)
     baseline, baseline_fit = dgp.extended_baseline(baseline_source, weeks, rng)
     week_index = pd.date_range("2017-01-02", periods=weeks, freq="W-MON")
     panel = dgp.generate_panel(
-        config, baseline, collinearity=collinearity, seed=seed, week_index=week_index
+        config,
+        baseline,
+        collinearity=collinearity,
+        seed=seed,
+        week_index=week_index,
+        noise_sd=noise_sd,
     )
     frame = panel.frame()
 
@@ -157,6 +169,15 @@ def main():
         raise SystemExit(f"{weekly_path} is missing; run `make frame` first")
     baseline_source = pd.read_parquet(weekly_path)["revenue"].to_numpy()
 
+    # Fixed once, from the real series, and passed to every cell. Deriving it per
+    # cell would make the 156-week arm noisier than the 85-week arm purely because
+    # its extrapolated baseline spreads further, which is the length axis
+    # confounding itself.
+    noise_sd = float(
+        config.spec["panel"]["noise_share_of_detrended_baseline_sd"]
+    ) * dgp._detrended_sd(baseline_source)
+    log.info("observation noise sd fixed at %.0f for every cell", noise_sd)
+
     cache = paths.recovery_dir()
     cells = [
         (weeks, collinearity, specification, seed)
@@ -168,6 +189,7 @@ def main():
     log.info("recovery grid: %d cells, %d draws x %d chains each", len(cells), DRAWS, CHAINS)
 
     results = []
+    failures = []
     for index, (weeks, collinearity, specification, seed) in enumerate(cells, 1):
         key = cell_key(weeks, collinearity, specification, seed, config.digest)
         cached = cache / f"{key}.json"
@@ -177,7 +199,14 @@ def main():
             results.append(json.loads(cached.read_text()))
             continue
         log.info("[%2d/%d] %-46s fitting", index, len(cells), label)
-        result = run_cell(config, baseline_source, weeks, collinearity, specification, seed)
+        try:
+            result = run_cell(
+                config, baseline_source, weeks, collinearity, specification, seed, noise_sd
+            )
+        except Exception as error:  # noqa: BLE001 - a failed cell is recorded, not fatal
+            log.warning("        cell failed: %s: %s", type(error).__name__, error)
+            failures.append({"cell": label, "error": f"{type(error).__name__}: {error}"})
+            continue
         cached.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         results.append(result)
         scored = result["average_roi"]["summary"]
@@ -253,6 +282,8 @@ def main():
                 "counted here, rather than averaged in."
             ),
             "total_sampling_seconds": round(sum(r["seconds"] for r in results), 1),
+            "cells_that_errored": failures,
+            "grid_version": GRID_VERSION,
         },
         "slices": slices,
         "fits": results,

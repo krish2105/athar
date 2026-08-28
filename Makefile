@@ -1,5 +1,5 @@
 .PHONY: setup gate test lint frame criteo panel mmm uplift clv experiments recovery \
-        triangulate notebooks-src notebooks card dashboard all clean
+        triangulate notebooks-src notebooks reports card dashboard all clean
 
 setup:
 	uv sync --all-extras
@@ -65,6 +65,11 @@ notebooks:
 		--execute --inplace --ExecutePreprocessor.kernel_name=athar notebooks/*.ipynb
 	uv run jupyter nbconvert --clear-output --inplace notebooks/*.ipynb
 
+# Every figure in reports/ is read from metrics/. Deleting reports/ and rerunning
+# reproduces them byte for byte.
+reports:
+	uv run python scripts/render_reports.py
+
 card:
 	uv run python scripts/render_card.py
 
@@ -72,7 +77,7 @@ dashboard:
 	cd dashboard && npm ci && npm run build
 
 all: lint test gate frame criteo panel mmm uplift clv experiments recovery \
-     triangulate notebooks-src notebooks card dashboard
+     triangulate notebooks-src notebooks reports card dashboard
 
 clean:
 	rm -rf .pytest_cache .ruff_cache __pycache__ .coverage

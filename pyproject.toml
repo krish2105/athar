@@ -69,6 +69,11 @@ ignore = ["D203", "D213", "D401"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D100", "D101", "D102", "D103"]
 "scripts/*" = ["D103"]
+# render_reports.py is largely a markdown template. A table row's length is a
+# property of the prose, and hard-wrapping it to satisfy a code rule would make
+# the generated report worse to read in order to make the generator look tidier.
+# Same carve-out ADIL applies to its dashboard template, for the same reason.
+"scripts/render_reports.py" = ["D103", "E501"]
 # A helper defined in a notebook cell to keep that cell readable is not public
 # API; the cell's own markdown says what it does. Everything in src/ still needs
 # a docstring.
