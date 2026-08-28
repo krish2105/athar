@@ -10,3 +10,14 @@ data/
 *.csv
 *.pkl
 .DS_Store
+
+.jupyter/
+.coverage
+.claude/launch.json
+
+# The dashboard is a Vite build. Its source is committed, its node_modules and
+# intermediate build state are not. docs/ IS committed: it is the built page,
+# and committing it is what lets GitHub Pages serve the repo without a build step.
+dashboard/node_modules/
+dashboard/.vite/
+dashboard/dist/

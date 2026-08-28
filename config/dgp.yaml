@@ -1,0 +1,176 @@
+# The pre-registered data-generating process for ATHAR's synthetic media panel.
+#
+# This file is committed and hashed into every artifact derived from it. It is
+# written before any model is fitted, and the modelling notebooks never read it —
+# they read the panel it produces. `athar.truth` is the only module that reads
+# the answers back, and it refuses to do so before a fit exists on disk.
+#
+# WHAT IS REAL AND WHAT IS NOT
+# ----------------------------
+# The revenue baseline is real Olist history. Everything else here — the spend,
+# the adstock, the saturation, the effect sizes, the attribution bias — is
+# constructed. No figure produced from this file describes the effectiveness of
+# any real marketing channel.
+#
+# One assumption deserves naming because it is not a fact about Olist: this
+# treats the observed Olist revenue series AS IF it were the no-media baseline.
+# Olist plainly did do marketing over 2017-2018, so the real series already
+# contains real media effects. Layering a simulated media effect on top does not
+# recover a clean counterfactual; it produces a series in which the *simulated*
+# component has a known truth. That is the only claim made, and it is the only
+# one the recovery study needs.
+
+version: 1
+seed: 20260829
+
+panel:
+  # 85 weeks matches the Olist window selected in metrics/frame.json. The
+  # recovery grid also runs 156 to separate "the method is biased" from "the
+  # panel was too short", which are otherwise indistinguishable.
+  weeks: 85
+
+  # `olist`    — the real 85-week series. Used for the headline fit.
+  # `extended` — a trend + annual-seasonality + AR(1)-residual model fitted to
+  #              Olist and simulated forward to any length. Used for the whole
+  #              recovery grid, INCLUDING its 85-week cells, so that the only
+  #              quantity changing across the length axis is length. The
+  #              extended baseline is itself simulated and is labelled as such.
+  baseline_mode: olist
+
+  # Observation noise, as a multiple of the baseline's DETRENDED standard
+  # deviation. Detrended because Olist grew roughly fivefold across the window,
+  # so the raw standard deviation is mostly trend; scaling observation noise by
+  # it would make the noise level an artifact of the growth rate.
+  #
+  # Set here rather than derived from a target R-squared, because a target
+  # R-squared quietly makes the effect sizes depend on the noise level.
+  noise_share_of_detrended_baseline_sd: 0.15
+
+collinearity:
+  # Total standard deviation of log spend, held FIXED across every level below.
+  #
+  # 0.75 puts the weekly coefficient of variation near 0.85, which is a heavily
+  # flighted plan rather than an always-on one, and leaves media explaining
+  # roughly 8-18% of post-trend revenue variance depending on the collinearity
+  # level. That band is where media-mix models are actually applied; much below
+  # it, no method recovers anything and the grid would only be measuring how
+  # quiet the panel is.
+  #
+  # This is a choice, and a consequential one: a quieter plan is a harder
+  # recovery problem, and the reported recovery is conditional on this level.
+  # metrics/panel.json records the realised signal share for every cell so the
+  # conditionality is visible rather than implied.
+  log_spend_sd: 0.75
+
+  # The share of that standard deviation coming from the shared factors, with
+  # the remainder going to channel-specific noise. This is the knob the recovery
+  # grid turns, and holding total volatility fixed is what makes it a clean axis:
+  # a knob that raised correlation by raising the factor loadings would also make
+  # spend more volatile, and the grid could not then tell which of the two had
+  # changed the answer.
+  #
+  # 0 gives orthogonal channels; 1 gives channels driven entirely in common.
+  #
+  # This axis moves two things at once and the report says so rather than
+  # pretending otherwise. Correlated channels are harder to tell apart, which
+  # hurts recovery; but their contributions also covary, so aggregate media
+  # variance is LARGER at the high level, which helps detection. Both the
+  # condition number and the media signal share are recorded per cell, because a
+  # single number would hide the trade-off that makes collinearity interesting.
+  levels:
+    low: 0.35
+    high: 0.95
+  default: high
+
+  # Two latent AR(1) factors rather than one. A single common factor can only
+  # produce a rank-one correlation structure, in which every pair of channels is
+  # correlated in the same direction — which is not what a media plan looks like.
+  # `budget_pressure` moves every channel together; `funnel_tilt` trades
+  # performance spend against brand and upper-funnel spend.
+  factors:
+    budget_pressure: {ar_phi: 0.70, sd: 1.0}
+    funnel_tilt:     {ar_phi: 0.55, sd: 1.0}
+
+  # Channel-specific noise. Its standard deviation is derived, not set:
+  # sqrt(1 - level^2) * log_spend_sd, so factor and idiosyncratic variance sum to
+  # the fixed total. Only its persistence is a free parameter.
+  idiosyncratic: {ar_phi: 0.40}
+
+# Adstock is generated with a Weibull PDF kernel, which admits a delayed peak.
+# The MMM is fitted with geometric adstock, which cannot. That mismatch is
+# deliberate: a model fitted to data its own functional form generated recovers
+# its own assumptions and measures nothing. The matched-specification arm of the
+# recovery grid fits WeibullPDFAdstock + HillSaturation instead, so the error
+# attributable to misspecification can be separated from the error attributable
+# to identification.
+adstock:
+  max_lag: 8
+
+channels:
+  # organic_capture — the share of BASELINE revenue that last-click hands to this
+  #   channel. This one parameter carries the project's thesis: it is the
+  #   mechanism by which platform-reported ROAS exceeds incremental ROAS.
+  #
+  #   The ordering across channels, and the fact that brand search leads it, is
+  #   the one thing here with external support rather than invention: Blake,
+  #   Nosko and Tadelis (2015), "Consumer Heterogeneity and Paid Search
+  #   Effectiveness: A Large-Scale Field Experiment", Econometrica 83(1),
+  #   155-174, switched eBay's paid search off across US markets and found the
+  #   returns to BRANDED keyword advertising were indistinguishable from zero,
+  #   because those buyers arrived anyway. The MAGNITUDES below are still chosen,
+  #   not measured, and no claim is made that they describe any real advertiser.
+  # tracking_rate  — the share of the channel's TRUE contribution that last-click
+  #   manages to observe at all. Low for upper-funnel video, whose effect
+  #   surfaces later and through another channel's click.
+  #
+  # search_nonbrand is the null case, deliberately: tracking_rate 1.0 and
+  # organic_capture 0.0 make last-click exactly unbiased for it. A harness that
+  # only ever shows attribution failing has had its answer chosen for it.
+
+  - name: search_brand
+    mean_weekly_spend: 4000.0
+    true_roi: 1.6
+    loading: {budget_pressure: 0.90, funnel_tilt: -0.60}
+    flighting: {period_weeks: 0, amplitude: 0.00}
+    weibull: {shape: 0.80, scale: 1.0}
+    hill: {half_saturation_multiple: 0.70, slope: 1.6}
+    attribution: {tracking_rate: 1.00, organic_capture: 0.15}
+
+  - name: search_nonbrand
+    mean_weekly_spend: 7000.0
+    true_roi: 2.8
+    loading: {budget_pressure: 1.00, funnel_tilt: 0.50}
+    flighting: {period_weeks: 0, amplitude: 0.00}
+    weibull: {shape: 1.00, scale: 1.2}
+    hill: {half_saturation_multiple: 1.40, slope: 1.2}
+    attribution: {tracking_rate: 1.00, organic_capture: 0.00}
+
+  - name: social_paid
+    mean_weekly_spend: 6000.0
+    true_roi: 2.1
+    loading: {budget_pressure: 1.00, funnel_tilt: 0.40}
+    flighting: {period_weeks: 0, amplitude: 0.00}
+    weibull: {shape: 1.60, scale: 2.0}
+    hill: {half_saturation_multiple: 1.10, slope: 1.4}
+    attribution: {tracking_rate: 0.95, organic_capture: 0.08}
+
+  - name: display_prog
+    mean_weekly_spend: 3500.0
+    # Below 1.0 on purpose. A channel that loses money is what gives the budget
+    # optimiser something to actually decide, and it is the case where an
+    # over-crediting attribution model does the most damage.
+    true_roi: 0.9
+    loading: {budget_pressure: 0.80, funnel_tilt: -0.30}
+    flighting: {period_weeks: 13, amplitude: 0.50}
+    weibull: {shape: 2.00, scale: 3.0}
+    hill: {half_saturation_multiple: 2.00, slope: 1.0}
+    attribution: {tracking_rate: 0.70, organic_capture: 0.03}
+
+  - name: video_ctv
+    mean_weekly_spend: 4500.0
+    true_roi: 2.5
+    loading: {budget_pressure: 0.70, funnel_tilt: -0.70}
+    flighting: {period_weeks: 17, amplitude: 0.70}
+    weibull: {shape: 2.50, scale: 4.0}
+    hill: {half_saturation_multiple: 1.60, slope: 1.8}
+    attribution: {tracking_rate: 0.25, organic_capture: 0.005}

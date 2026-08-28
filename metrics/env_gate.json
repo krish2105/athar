@@ -1,0 +1,71 @@
+{
+  "gates": {
+    "causal": {
+      "detail": {
+        "causalml_t_learner_mean_effect": 0.000237,
+        "econml_correlation_with_true_modifier": 0.8524,
+        "econml_forest_mean_effect": 0.00597
+      },
+      "status": "pass"
+    },
+    "lifetimes": {
+      "detail": {
+        "bgnbd_params": {
+          "a": 0.0773,
+          "alpha": 181.5972,
+          "b": 0.0101,
+          "r": 0.0515
+        },
+        "gamma_gamma_fitted_on": 239,
+        "zero_frequency_share": 0.9522
+      },
+      "status": "pass"
+    },
+    "meridian": {
+      "detail": {
+        "devices": [
+          "CPU"
+        ],
+        "tensorflow": "2.20.0",
+        "tensorflow_probability": "0.25.0"
+      },
+      "status": "pass"
+    },
+    "pymc_marketing": {
+      "detail": {
+        "pytensor_compiles": true,
+        "transforms_built": [
+          "WeibullPDFAdstock",
+          "GeometricAdstock",
+          "HillSaturation",
+          "LogisticSaturation"
+        ]
+      },
+      "status": "pass"
+    }
+  },
+  "platform": {
+    "machine": "arm64",
+    "python": "3.11.15",
+    "system": "Darwin"
+  },
+  "provenance": {
+    "source": "environment",
+    "split": "n/a",
+    "synthetic": false
+  },
+  "versions": {
+    "causalml": "0.17.0",
+    "duckdb": "1.5.5",
+    "econml": "0.17.0",
+    "google-meridian": "1.4.0",
+    "lifetimes": "0.11.3",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "pymc": "5.28.5",
+    "pymc-marketing": "0.19.2",
+    "pytensor": "2.38.2",
+    "scipy": "1.17.1",
+    "tensorflow": "2.20.0"
+  }
+}

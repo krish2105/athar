@@ -1,0 +1,212 @@
+{
+  "attribution_summary": {
+    "mechanism": "Last-click here is a parametric caricature, not a simulated journey: tracking_rate is the share of a channel's true contribution it observes, and organic_capture is the share of baseline revenue it credits to that channel. No claim is made about attribution mechanics, only about the consequences of a stated bias.",
+    "most_overstated": "search_brand",
+    "most_understated": "video_ctv",
+    "null_case": "search_nonbrand carries tracking_rate 1.0 and organic_capture 0.0, so last-click recovers its true ROI exactly. A harness that only ever showed attribution failing would have had its answer chosen for it."
+  },
+  "channels": [
+    {
+      "adstock_peak_lag_weeks": 0,
+      "channel": "search_brand",
+      "half_saturation": 2820.86,
+      "hill_slope": 1.6,
+      "lastclick_bias_absolute": 5.873196,
+      "lastclick_bias_relative": 3.670747,
+      "lastclick_roas": 7.473196,
+      "marginal_over_average": 0.599648,
+      "mean_weekly_spend": 4000.0,
+      "organic_capture": 0.15,
+      "response_regime": "concave — saturating, the next BRL buys less than the average",
+      "total_spend": 340000.0,
+      "tracking_rate": 1.0,
+      "true_incremental_revenue": 544000.0,
+      "true_roi_average": 1.6,
+      "true_roi_marginal": 0.959436,
+      "weibull_scale": 1.0,
+      "weibull_shape": 0.8
+    },
+    {
+      "adstock_peak_lag_weeks": 0,
+      "channel": "search_nonbrand",
+      "half_saturation": 9879.31,
+      "hill_slope": 1.2,
+      "lastclick_bias_absolute": 0.0,
+      "lastclick_bias_relative": 0.0,
+      "lastclick_roas": 2.8,
+      "marginal_over_average": 0.684675,
+      "mean_weekly_spend": 7000.0,
+      "organic_capture": 0.0,
+      "response_regime": "concave — saturating, the next BRL buys less than the average",
+      "total_spend": 595000.0,
+      "tracking_rate": 1.0,
+      "true_incremental_revenue": 1666000.0,
+      "true_roi_average": 2.8,
+      "true_roi_marginal": 1.917091,
+      "weibull_scale": 1.2,
+      "weibull_shape": 1.0
+    },
+    {
+      "adstock_peak_lag_weeks": 0,
+      "channel": "social_paid",
+      "half_saturation": 6667.62,
+      "hill_slope": 1.4,
+      "lastclick_bias_absolute": 1.983247,
+      "lastclick_bias_relative": 0.944404,
+      "lastclick_roas": 4.083247,
+      "marginal_over_average": 0.708039,
+      "mean_weekly_spend": 6000.0,
+      "organic_capture": 0.08,
+      "response_regime": "concave — saturating, the next BRL buys less than the average",
+      "total_spend": 510000.0,
+      "tracking_rate": 0.95,
+      "true_incremental_revenue": 1071000.0,
+      "true_roi_average": 2.1,
+      "true_roi_marginal": 1.486882,
+      "weibull_scale": 2.0,
+      "weibull_shape": 1.6
+    },
+    {
+      "adstock_peak_lag_weeks": 1,
+      "channel": "display_prog",
+      "half_saturation": 7134.7,
+      "hill_slope": 1.0,
+      "lastclick_bias_absolute": 1.072445,
+      "lastclick_bias_relative": 1.191605,
+      "lastclick_roas": 1.972445,
+      "marginal_over_average": 0.645282,
+      "mean_weekly_spend": 3500.0,
+      "organic_capture": 0.03,
+      "response_regime": "concave — saturating, the next BRL buys less than the average",
+      "total_spend": 297500.0,
+      "tracking_rate": 0.7,
+      "true_incremental_revenue": 267750.0,
+      "true_roi_average": 0.9,
+      "true_roi_marginal": 0.580754,
+      "weibull_scale": 3.0,
+      "weibull_shape": 2.0
+    },
+    {
+      "adstock_peak_lag_weeks": 2,
+      "channel": "video_ctv",
+      "half_saturation": 7325.26,
+      "hill_slope": 1.8,
+      "lastclick_bias_absolute": -1.700979,
+      "lastclick_bias_relative": -0.680392,
+      "lastclick_roas": 0.799021,
+      "marginal_over_average": 1.116668,
+      "mean_weekly_spend": 4500.0,
+      "organic_capture": 0.005,
+      "response_regime": "convex — under-invested, the next BRL buys more than the average",
+      "total_spend": 382500.0,
+      "tracking_rate": 0.25,
+      "true_incremental_revenue": 956250.0,
+      "true_roi_average": 2.5,
+      "true_roi_marginal": 2.791669,
+      "weibull_scale": 4.0,
+      "weibull_shape": 2.5
+    }
+  ],
+  "design": {
+    "adstock_max_lag": 8,
+    "baseline_is_real": true,
+    "baseline_mode": "olist",
+    "blended_true_roi": 2.12,
+    "channels": [
+      "search_brand",
+      "search_nonbrand",
+      "social_paid",
+      "display_prog",
+      "video_ctv"
+    ],
+    "collinearity_kappa": 0.95,
+    "collinearity_level": "high",
+    "media_as_share_of_revenue": 0.252788,
+    "spend_as_share_of_revenue": 0.11924,
+    "total_baseline": 13312577.43,
+    "total_media_contribution": 4505000.0,
+    "total_revenue": 17821249.35,
+    "total_spend": 2125000.0,
+    "weeks": 85,
+    "window_end": "2018-08-13",
+    "window_start": "2017-01-02"
+  },
+  "generating_specification": {
+    "adstock": "Weibull PDF, which admits a delayed peak",
+    "fitted_with": "Geometric adstock and logistic saturation, neither of which can express the generating form. The mismatch is deliberate: a model fitted to data its own functional form produced recovers its own assumptions and measures nothing. The matched-specification arm of the recovery grid exists to separate misspecification error from identification error.",
+    "saturation": "Hill"
+  },
+  "identification": {
+    "condition_number": 5.952833,
+    "correlation": {
+      "display_prog": {
+        "display_prog": 1.0,
+        "search_brand": 0.818173,
+        "search_nonbrand": 0.581581,
+        "social_paid": 0.612182,
+        "video_ctv": 0.56291
+      },
+      "search_brand": {
+        "display_prog": 0.818173,
+        "search_brand": 1.0,
+        "search_nonbrand": 0.622033,
+        "social_paid": 0.689521,
+        "video_ctv": 0.617032
+      },
+      "search_nonbrand": {
+        "display_prog": 0.581581,
+        "search_brand": 0.622033,
+        "search_nonbrand": 1.0,
+        "social_paid": 0.88808,
+        "video_ctv": 0.253535
+      },
+      "social_paid": {
+        "display_prog": 0.612182,
+        "search_brand": 0.689521,
+        "search_nonbrand": 0.88808,
+        "social_paid": 1.0,
+        "video_ctv": 0.38872
+      },
+      "video_ctv": {
+        "display_prog": 0.56291,
+        "search_brand": 0.617032,
+        "search_nonbrand": 0.253535,
+        "social_paid": 0.38872,
+        "video_ctv": 1.0
+      }
+    },
+    "max_pairwise_correlation": 0.88808,
+    "max_vif": 5.754579,
+    "media_share_of_detrended_variance": 0.166909,
+    "media_share_of_revenue_variance": 0.067751,
+    "note": "The detrended share is the one that bounds identification. The raw share is dominated by Olist's fivefold growth across the window, which any media-mix model absorbs into its own trend and seasonality terms rather than having to explain with media.",
+    "vif": {
+      "display_prog": 3.207847,
+      "search_brand": 4.113591,
+      "search_nonbrand": 5.25128,
+      "social_paid": 5.754579,
+      "video_ctv": 1.807311
+    }
+  },
+  "provenance": {
+    "caveat": "SYNTHETIC — the channel-spend panel and every media effect in it are simulated from a pre-registered data-generating process, not measured. The revenue baseline is real Olist history; the media contribution layered on it is not. No figure here describes the effectiveness of any real marketing channel, and none may be quoted as one. What is measured is whether a method recovers a truth that is known only because it was constructed.",
+    "dgp_hash": "f4e2bfede31ba6a5",
+    "seed": 20260829,
+    "source": "panel",
+    "split": "full",
+    "synthetic": true
+  },
+  "verification": {
+    "fitting_frame_columns": [
+      "display_prog",
+      "revenue",
+      "search_brand",
+      "search_nonbrand",
+      "social_paid",
+      "video_ctv",
+      "week"
+    ],
+    "fitting_frame_leaks_truth": false,
+    "truth_reconciliation_worst_relative_difference": 0.0
+  }
+}

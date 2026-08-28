@@ -1,0 +1,69 @@
+{
+  "coverage": {
+    "orders_all_dates": 98199,
+    "revenue_all_dates_brl": 13494400.74,
+    "share_of_orders_in_window": 0.985051,
+    "share_of_revenue_in_window": 0.986526
+  },
+  "geo_panel": {
+    "balanced": true,
+    "largest_state_revenue_share": 0.380849,
+    "rows": 2295,
+    "states": 27,
+    "states_below_one_percent_of_revenue": 13
+  },
+  "provenance": {
+    "source": "olist",
+    "split": "full",
+    "synthetic": false
+  },
+  "repeat_behaviour": {
+    "all_dates": {
+      "people": 94983,
+      "repeat_rate": 0.030395,
+      "with_repeat": 2887
+    },
+    "in_window": {
+      "people": 93573,
+      "repeat_rate": 0.030329,
+      "with_repeat": 2838,
+      "with_two_or_more_repeats": 230
+    },
+    "note": "A person is customer_unique_id; Olist issues a fresh customer_id per order, so keying on that would report a repeat rate of exactly zero."
+  },
+  "totals": {
+    "freight_brl": 2212320.14,
+    "items": 110429,
+    "mean_order_value_brl": 137.62,
+    "orders": 96731,
+    "people": 93573,
+    "revenue_brl": 13312577.43,
+    "states": 27
+  },
+  "verification": {
+    "independent_order_count_matches": true,
+    "independent_revenue_difference_brl": 1.37817e-05,
+    "independent_revenue_relative_difference": 1.035e-12,
+    "independent_revenue_tolerance_brl": 0.01,
+    "zero_order_weeks_in_window": 0
+  },
+  "weekly_shape": {
+    "first_eight_weeks_revenue_brl": 348162.64,
+    "last_eight_weeks_revenue_brl": 1751091.24,
+    "max_orders": 2972,
+    "median_orders": 988.0,
+    "median_revenue_brl": 145486.36,
+    "min_orders": 46
+  },
+  "window": {
+    "end": "2018-08-13",
+    "excluded_statuses": [
+      "canceled",
+      "unavailable"
+    ],
+    "revenue_definition": "Sum of order_items.price, excluding freight, recognised at order_purchase_timestamp. Currency is BRL, 2017-2018.",
+    "rule": "Starts the week after the last week with zero orders, which removes the nine-week collection gap in late 2016. Ends at the last week carrying at least 70% of the median of the 8 weeks before it, which removes the mid-week truncation of the extract. The comparison is against recent weeks rather than the whole series because Olist grew throughout, so a half-collected final week can still sit above the global median.",
+    "start": "2017-01-02",
+    "weeks": 85
+  }
+}

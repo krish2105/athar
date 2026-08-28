@@ -1,0 +1,77 @@
+{
+  "complier_effect": {
+    "cace": 0.0319638639,
+    "ci_95": [
+      0.0300944582,
+      0.0338332695
+    ],
+    "compliance_rate": 0.03603673,
+    "interpretation": "Random assignment used as an instrument for exposure. This is the defensible version of 'the effect on users who saw the ad'; the naive version below is not.",
+    "standard_error": 0.0009537959
+  },
+  "conversion": {
+    "control_ci": [
+      0.00187807,
+      0.00199711
+    ],
+    "control_conversions": 4063,
+    "control_rate": 0.00193759,
+    "treated_ci": [
+      0.00305791,
+      0.00312102
+    ],
+    "treated_conversions": 36711,
+    "treated_rate": 0.00308946
+  },
+  "effective_sample": {
+    "distinct_feature_vectors": 11859441,
+    "distinct_share": 0.84834,
+    "note": "Criteo's twelve features are anonymised and heavily repeated. Where the share below is well under one, the nominal row count overstates the precision available to any model fitted on those features, and precision claims should follow the effective count rather than the nominal one. It does not affect the treatment-effect estimates above, which depend on the assignment rather than on the features."
+  },
+  "intent_to_treat": {
+    "absolute_lift": 0.0011518731,
+    "ci_95": [
+      0.0010845058,
+      0.0012192403
+    ],
+    "incremental_conversions": 13687.3,
+    "interpretation": "Unbiased by construction: assignment is random, so the difference between arms is the causal effect of being eligible for advertising.",
+    "relative_lift": 0.594488,
+    "standard_error": 3.43717e-05
+  },
+  "platform_reported_versus_incremental": {
+    "exposed_users": 428212,
+    "incremental_conversions": 13687.3,
+    "interpretation": "The numerator counts every conversion by a user who was shown an ad, which is what an ad platform reports. The denominator counts the conversions that would not have happened otherwise. Both are computed from the same real randomised trial.",
+    "naive_rate_framing": {
+      "conversion_rate_among_exposed": 0.05378411,
+      "conversion_rate_in_control": 0.00193759,
+      "exposed_share_of_treated_arm": 0.036037,
+      "interpretation": "Comparing the exposed against the held-out control makes advertising look roughly 28 times more effective than it was. The honest relative figure is the intent-to-treat ratio. The gap is selection: users who were shown an ad are users who were browsing, and browsing predicts buying.",
+      "naive_rate_ratio": 27.7583,
+      "true_relative_lift_ratio": 1.5945
+    },
+    "overstatement_ratio": 1.6827,
+    "platform_reported_conversions": 23031
+  },
+  "population": {
+    "control": 2096937,
+    "rows": 13979592,
+    "sampling": "none — every statistic below is computed on all rows",
+    "treated": 11882655,
+    "treated_share": 0.85
+  },
+  "provenance": {
+    "source": "criteo",
+    "split": "full population",
+    "synthetic": false
+  },
+  "randomisation_check": {
+    "exposure_in_control_arm": 0,
+    "note": "Exposure is a post-treatment variable: who was shown an ad depends on who browsed, and browsing predicts buying. Conditioning on it breaks the randomisation, which is why the platform-reported figure below is not a causal quantity and the intent-to-treat figure is."
+  },
+  "visit": {
+    "control_rate": 0.03820096,
+    "treated_rate": 0.04854336
+  }
+}
