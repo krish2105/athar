@@ -1,0 +1,41 @@
+# Publish docs/ to GitHub Pages.
+#
+# Inactive by design. The repository is private, and GitHub Pages needs a paid
+# plan to serve a private repo, so this workflow is committed ready rather than
+# running. Making the repository public is the only step needed to turn it on —
+# there is nothing here left to fix at that point.
+#
+# docs/ is the built dashboard and is committed, so Pages serves it directly with
+# no build step in CI. `make dashboard` regenerates it.
+
+name: Deploy the results page
+
+on:
+  push:
+    branches: [master]
+    paths: ["docs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

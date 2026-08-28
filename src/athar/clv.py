@@ -221,6 +221,7 @@ def fit_bgnbd_bayesian(
     chains: int = 4,
     seed: int = 20260829,
     time_divisor: float = 7.0,
+    max_customers: int | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     """Fit BG/NBD by MCMC, and report how far the posterior moved from the prior.
 
@@ -248,6 +249,18 @@ def fit_bgnbd_bayesian(
         Reproducibility.
     time_divisor : float, optional
         Divides ``recency`` and ``T``; 7 gives weeks.
+    max_customers : int, optional
+        Fit on a uniform random subsample of at most this many customers.
+
+        BG/NBD has four parameters. Sampling it over 93,573 customers costs an hour
+        of wall clock and buys nothing: the posterior for four parameters is
+        determined long before that, and the binding constraint here is not sample
+        size but identification — the dropout parameters are unidentified at *any*
+        n, which is the finding. The subsample size is recorded with the result so
+        the reader can see what was fitted.
+
+        The headline result — that maximum likelihood does not converge — is
+        computed on the full base and is unaffected by this.
 
     Returns
     -------
@@ -256,12 +269,16 @@ def fit_bgnbd_bayesian(
     """
     from pymc_marketing.clv import BetaGeoModel
 
+    fitted_on = summary
+    if max_customers is not None and len(summary) > max_customers:
+        fitted_on = summary.sample(n=max_customers, random_state=seed).reset_index(drop=True)
+
     data = pd.DataFrame(
         {
-            "customer_id": summary["customer_unique_id"].to_numpy(),
-            "frequency": summary["frequency"].to_numpy(),
-            "recency": (summary["recency"] / time_divisor).to_numpy(),
-            "T": (summary["T"] / time_divisor).to_numpy(),
+            "customer_id": fitted_on["customer_unique_id"].to_numpy(),
+            "frequency": fitted_on["frequency"].to_numpy(),
+            "recency": (fitted_on["recency"] / time_divisor).to_numpy(),
+            "T": (fitted_on["T"] / time_divisor).to_numpy(),
         }
     )
     import pymc as pm
@@ -282,15 +299,36 @@ def fit_bgnbd_bayesian(
     posterior = model.fit_result
     prior = prior_draws.prior
 
+    # A posterior is only worth reporting if the sampler that produced it worked.
+    # Without this the collapse of a parameter to a point looks identical to a
+    # confident estimate, and on a base this degenerate that is a real risk rather
+    # than a hypothetical one.
+    import arviz as az
+
+    diagnostics = {
+        "divergences": int(model.idata.sample_stats["diverging"].sum()),
+        "max_r_hat": round(float(az.rhat(model.idata).max().to_array().max()), 6),
+        "min_ess_bulk": round(float(az.ess(model.idata).min().to_array().min()), 2),
+    }
+    diagnostics["passed"] = bool(
+        diagnostics["max_r_hat"] < 1.01 and diagnostics["min_ess_bulk"] >= 400
+    )
+
     declared = {
         name: str(value)
         for name, value in model.model_config.items()
         if name in ("alpha", "r", "phi_dropout", "kappa_dropout")
     }
-    movement: dict[str, Any] = {"declared_priors": declared}
+    movement: dict[str, Any] = {
+        "declared_priors": declared,
+        "fitted_on_customers": int(len(fitted_on)),
+        "available_customers": int(len(summary)),
+        "sampler": diagnostics,
+    }
     for name in ("a", "b", "alpha", "r"):
         if name not in posterior:
             continue
+
         entry = {
             "posterior_mean": float(posterior[name].mean()),
             "posterior_sd": float(posterior[name].std()),
@@ -303,10 +341,32 @@ def fit_bgnbd_bayesian(
             entry["sd_ratio_posterior_over_prior"] = (
                 entry["posterior_sd"] / entry["prior_sd"] if entry["prior_sd"] else None
             )
-            entry["learned_from_data"] = bool(
-                entry["prior_sd"] and entry["posterior_sd"] < 0.5 * entry["prior_sd"]
-            )
+        # A narrow posterior is not the same thing as an informed one. On this base
+        # `alpha` collapses to around 1e-306 — denormal, the smallest number the
+        # float can hold — against a prior mean near 9. That interval is as narrow
+        # as an interval gets and it means the sampler fell into a corner, not that
+        # the data spoke. Distinguishing the two is the whole point of reporting
+        # the prior alongside, so the degenerate case is named rather than left to
+        # look like precision.
+        entry["degenerate"] = bool(entry["posterior_mean"] < 1e-8 or entry["posterior_sd"] == 0.0)
+        entry["informative"] = bool(
+            not entry["degenerate"]
+            and entry.get("prior_sd")
+            and entry["posterior_sd"] < 0.5 * entry["prior_sd"]
+        )
         movement[name] = entry
+
+    # Computed after the loop above has populated the parameters, not before it.
+    # Reading it too early returned an empty list every time, and the report then
+    # said 'degenerate parameters: none' directly beneath a note explaining that
+    # alpha had collapsed — a contradiction that would have been easy to miss.
+    degenerate = [
+        name
+        for name, entry in movement.items()
+        if isinstance(entry, dict) and entry.get("degenerate")
+    ]
+    movement["degenerate_parameters"] = degenerate
+    movement["fit_is_trustworthy"] = bool(diagnostics["passed"] and not degenerate)
     return model, movement
 
 

@@ -1,0 +1,48 @@
+# Lint and test on every push.
+#
+# Deliberately does not run `make all`. The pipeline reads Olist and Criteo from a
+# shared data store outside the repository which is not redistributable, and forty
+# full-posterior fits are not a CI job. What CI can check is that the library is
+# clean, the tests pass, and the dashboard still builds — which is what it checks.
+
+name: checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: krish2105/spine
+          path: ../01-spine
+        continue-on-error: true
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+
+  dashboard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npm run build

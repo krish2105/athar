@@ -440,6 +440,9 @@ def clv_report():
         return None
     behaviour, ml = clv["repeat_behaviour"], clv["maximum_likelihood"]
     value, validation = clv["lifetime_value"], clv["validation"]
+    bayesian = clv["models"]["bgnbd_bayesian_full_base"]
+    sampler = bayesian["parameters"].get("sampler", {})
+    degenerate = bayesian.get("degenerate_parameters", [])
     return f"""# ATHAR — customer lifetime value, and a model that does not fit
 
 {HEADER}
@@ -460,9 +463,26 @@ Across days, weeks and months, at penalties from 0 to 10.
 
 {ml["finding"]}
 
-## The Bayesian fit converges because its priors do the work
+## The Bayesian fit runs, and should not be believed either
 
-{clv["models"]["bgnbd_bayesian_full_base"]["note"]}
+Fitted on {bayesian["fitted_on"]:,} customers of {bayesian.get("available", 0):,} —
+BG/NBD has four parameters, and sampling it over the whole base costs an hour
+without changing them.
+
+| | Value |
+|---|---:|
+| Divergences | {sampler.get("divergences", "n/a")} |
+| Max R-hat | {sampler.get("max_r_hat", "n/a")} |
+| Min bulk ESS | {sampler.get("min_ess_bulk", "n/a")} |
+| Sampler passed | **{sampler.get("passed", "n/a")}** |
+| Degenerate parameters | {", ".join(degenerate) if degenerate else "none"} |
+| Fit trustworthy | **{bayesian.get("trustworthy", "n/a")}** |
+
+{bayesian["note"]}
+
+## Verdict
+
+{clv.get("verdict", "")}
 
 ## Validation on a time-based holdout
 

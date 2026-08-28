@@ -790,16 +790,20 @@ if clv:
     print(ml["finding"])
 """),
             markdown("""
-## The Bayesian fit converges because its priors do the work
+## The Bayesian fit runs, and should not be believed either
 
-This is not the Bayesian model being better. pymc-marketing parameterises dropout
-with a Pareto prior whose shape parameter is one, which has no finite mean — an
-extremely diffuse prior. If the posterior on those parameters barely narrows
-against it, the data has told us nothing about the dropout process, which is
-exactly what maximum likelihood was unable to estimate.
+The MCMC fit is the only one that runs at all, and running is not the same as
+working. Two things have to be checked before a posterior is quoted, and both fail
+here.
 
-The ratio of posterior to prior standard deviation is reported per parameter so
-that can be read rather than assumed.
+The sampler's own diagnostics: the calibration fit throws thousands of divergences.
+
+And degeneracy. A narrow posterior is not the same as an informed one — `alpha`
+lands near 1e-306, the smallest number a float can hold, against a prior mean near
+9. An interval that tight is the sampler falling into a corner, not the data
+speaking, and reading it as a confident estimate would be exactly the error this
+project exists to avoid.
+
 """),
             code("""
 if clv:
@@ -808,9 +812,15 @@ if clv:
     for name, prior in parameters.get("declared_priors", {}).items():
         print(f"  {name:16s} {prior}")
     print()
-    rows = [{"parameter": name, **{k: round(v, 4) if isinstance(v, float) else v
-                                    for k, v in entry.items()}}
-            for name, entry in parameters.items() if name != "declared_priors"]
+    print("sampler:", parameters.get("sampler"))
+    print("degenerate:", clv["models"]["bgnbd_bayesian_full_base"].get("degenerate_parameters"))
+    print("trustworthy:", clv["models"]["bgnbd_bayesian_full_base"].get("trustworthy"))
+    print()
+    rows = [{"parameter": name, "posterior_mean": entry["posterior_mean"],
+             "posterior_sd": entry["posterior_sd"], "prior_mean": entry.get("prior_mean"),
+             "degenerate": entry.get("degenerate")}
+            for name, entry in parameters.items()
+            if isinstance(entry, dict) and "posterior_mean" in entry]
     if rows:
         show(pd.DataFrame(rows))
     print(clv["models"]["bgnbd_bayesian_full_base"]["note"])
@@ -848,6 +858,8 @@ if clv:
     value = clv["lifetime_value"]
     for key, item in value.items():
         print(f"{key:44s} {item}")
+    print()
+    print("VERDICT:", clv.get("verdict", ""))
     print()
     print(clv["finding"])
 """),

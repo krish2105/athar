@@ -36,6 +36,12 @@ HOLDOUT_WEEKS = 16
 #: Draws and tuning steps per chain for the MCMC fit. Four chains.
 BAYES_DRAWS = 1000
 
+#: Customers in the MCMC fit. BG/NBD has four parameters; sampling it over all
+#: 93,573 costs an hour and determines nothing the first tens of thousands did not.
+#: The full base is still used for the maximum-likelihood attempts, which is where
+#: the finding lives, and for every descriptive figure.
+BAYES_MAX_CUSTOMERS = 30_000
+
 
 def main():
     processed = paths.processed_dir()
@@ -72,29 +78,42 @@ def main():
     )
 
     log.info("fitting BG/NBD by MCMC (the only fit available on this base)")
-    bayesian, movement = clv.fit_bgnbd_bayesian(summary, draws=BAYES_DRAWS, tune=BAYES_DRAWS)
+    bayesian, movement = clv.fit_bgnbd_bayesian(
+        summary, draws=BAYES_DRAWS, tune=BAYES_DRAWS, max_customers=BAYES_MAX_CUSTOMERS
+    )
     for name, entry in movement.items():
-        if name == "declared_priors":
+        if not isinstance(entry, dict) or "posterior_mean" not in entry:
             continue
         ratio = entry.get("sd_ratio_posterior_over_prior")
         suffix = f", prior sd {entry['prior_sd']:.4f}, ratio {ratio:.3f}" if ratio else ""
+        flag = " DEGENERATE" if entry.get("degenerate") else ""
         log.info(
-            "  %s: posterior %.4f (sd %.4f)%s",
+            "  %s: posterior %.4g (sd %.4g)%s%s",
             name,
             entry["posterior_mean"],
             entry["posterior_sd"],
             suffix,
+            flag,
         )
 
     gamma, repeaters_fitted = clv.fit_gamma_gamma(summary)
-    log.info("Gamma-Gamma fitted on %s repeaters", f"{repeaters_fitted:,}")
+    sampler = movement["sampler"]
+    log.info(
+        "  sampler: %d divergences, max r_hat %.4f, min ess %.0f — %s",
+        sampler["divergences"],
+        sampler["max_r_hat"],
+        sampler["min_ess_bulk"],
+        "converged" if sampler["passed"] else "DIAGNOSTICS FAILED",
+    )
 
     observation_end = orders["purchased_at"].max().normalize() + pd.Timedelta(days=1)
     cutoff = observation_end - pd.Timedelta(weeks=HOLDOUT_WEEKS)
     log.info("calibration ends %s, holdout runs to %s", cutoff.date(), observation_end.date())
 
     split = clv.calibration_holdout(orders, cutoff, observation_end)
-    calibration_model, _ = clv.fit_bgnbd_bayesian(split, draws=BAYES_DRAWS, tune=BAYES_DRAWS)
+    calibration_model, _ = clv.fit_bgnbd_bayesian(
+        split, draws=BAYES_DRAWS, tune=BAYES_DRAWS, max_customers=BAYES_MAX_CUSTOMERS
+    )
 
     horizon_weeks = float(split["holdout_weeks"].iloc[0])
     calibration_data = pd.DataFrame(
@@ -175,15 +194,20 @@ def main():
         },
         "models": {
             "bgnbd_bayesian_full_base": {
-                "fitted_on": int(len(summary)),
+                "fitted_on": movement["fitted_on_customers"],
+                "available": movement["available_customers"],
                 "parameters": movement,
+                "trustworthy": movement["fit_is_trustworthy"],
+                "degenerate_parameters": movement["degenerate_parameters"],
                 "note": (
-                    "The MCMC fit is not a second opinion here; it is the only fit "
-                    "available. Its priors supply the regularisation the data cannot, "
-                    "which is why it converges where maximum likelihood does not. A "
-                    "parameter whose posterior standard deviation is close to its prior's "
-                    "has not been learned from the data, and the ratio is reported per "
-                    "parameter so a reader can see which ones those are."
+                    "The MCMC fit is not a second opinion here; it is the only fit that "
+                    "runs at all. It should not be read as a working model. The sampler "
+                    "block records its divergences, and any parameter that collapsed to a "
+                    "point is named in degenerate_parameters — on this base `alpha` lands "
+                    "near 1e-306, which is the smallest number the float can hold, against "
+                    "a prior mean near 9. A posterior that narrow is the sampler falling "
+                    "into a corner, not the data speaking, and calling it a confident "
+                    "estimate would be the exact error this project exists to avoid."
                 ),
             },
             "gamma_gamma_repeaters_only": {
@@ -223,6 +247,14 @@ def main():
                 np.corrcoef(lifetime_value, first_order)[0, 1]
             ),
         },
+        "verdict": (
+            "BG/NBD cannot be fitted to this base by any method attempted. Maximum "
+            "likelihood does not converge at any setting. MCMC runs, but drives alpha "
+            "to a denormal value and throws thousands of divergences on the "
+            "calibration fit, and its predictions lose to predicting zero on a "
+            "time-based holdout. The purchase-rate and dropout parameters are not "
+            "identified when 97% of customers never return."
+        ),
         "finding": (
             "Olist is a one-shot acquisition business. With a 3% repeat rate, expected "
             "lifetime value is a small multiple of first-order value and is very nearly "

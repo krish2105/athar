@@ -1,0 +1,286 @@
+{
+  "finding": "Olist is a one-shot acquisition business. With a 3% repeat rate, expected lifetime value is a small multiple of first-order value and is very nearly proportional to it. The consequence is carried into the budget decision in metrics/triangulation.json: when lifetime value is proportional to immediate value, weighting a media allocation by one or the other gives the same answer, and a story the brief invites cannot honestly be told on this data.",
+  "lifetime_value": {
+    "clv_over_first_order_value": NaN,
+    "correlation_clv_with_first_order_value": NaN,
+    "horizon_weeks": 52.0,
+    "mean_expected_clv_brl": NaN,
+    "mean_first_order_value_brl": 138.11620381947782,
+    "mean_predicted_purchases": NaN,
+    "median_predicted_purchases": NaN,
+    "share_predicted_below_0_1_purchases": 0.9959603731845724
+  },
+  "maximum_likelihood": {
+    "attempts_full_base": [
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "months"
+      }
+    ],
+    "attempts_repeaters_only": [
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "days"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "weeks"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.0,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.01,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 0.1,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 1.0,
+        "time_unit": "months"
+      },
+      {
+        "converged": false,
+        "penalizer": 10.0,
+        "time_unit": "months"
+      }
+    ],
+    "converged_on_full_base": 0,
+    "converged_on_repeaters_only": 0,
+    "finding": "BG/NBD does not converge by maximum likelihood on this base — at any time scale tried (days, weeks, months), at any penalty from 0 to 10, on the full base or on the repeaters alone. The likelihood returns NaN and the parameters run off in log space. This is not a library defect or a tuning problem: BG/NBD's dropout parameters describe the shape of a Beta distribution over the probability of churning after each purchase, and they are identified only by the pattern of repeat purchasing. Olist's repeaters average 1.11 repeat purchases each, so there is nothing for those parameters to be estimated from and the likelihood is flat in them."
+  },
+  "models": {
+    "bgnbd_bayesian_full_base": {
+      "available": 93573,
+      "degenerate_parameters": [],
+      "fitted_on": 30000,
+      "note": "The MCMC fit is not a second opinion here; it is the only fit that runs at all. It should not be read as a working model. The sampler block records its divergences, and any parameter that collapsed to a point is named in degenerate_parameters — on this base `alpha` lands near 1e-306, which is the smallest number the float can hold, against a prior mean near 9. A posterior that narrow is the sampler falling into a corner, not the data speaking, and calling it a confident estimate would be the exact error this project exists to avoid.",
+      "parameters": {
+        "a": {
+          "degenerate": false,
+          "hdi_high": 3.0518809974566103,
+          "hdi_low": 1.3110522953591297,
+          "informative": true,
+          "posterior_mean": 2.0160129037449477,
+          "posterior_sd": 0.5885820712044769,
+          "prior_mean": 3.4487372498623237,
+          "prior_sd": 17.422268128185667,
+          "sd_ratio_posterior_over_prior": 0.03378332068327381
+        },
+        "alpha": {
+          "degenerate": true,
+          "hdi_high": 1.6121596407895132e-306,
+          "hdi_low": 1.596901949371911e-306,
+          "informative": false,
+          "posterior_mean": 1.6020943735423745e-306,
+          "posterior_sd": 0.0,
+          "prior_mean": 8.918930557835914,
+          "prior_sd": 4.657481807172503,
+          "sd_ratio_posterior_over_prior": 0.0
+        },
+        "available_customers": 93573,
+        "b": {
+          "degenerate": false,
+          "hdi_high": 0.3728482495257333,
+          "hdi_low": 0.14164541769728894,
+          "informative": true,
+          "posterior_mean": 0.23150028164326739,
+          "posterior_sd": 0.07580138751384698,
+          "prior_mean": 4.369117151519286,
+          "prior_sd": 39.00234611324561,
+          "sd_ratio_posterior_over_prior": 0.0019435084057188043
+        },
+        "declared_priors": {
+          "alpha": "Prior(\"Weibull\", alpha=2, beta=10)",
+          "kappa_dropout": "Prior(\"Pareto\", alpha=1, m=1)",
+          "phi_dropout": "Prior(\"Uniform\", lower=0, upper=1)",
+          "r": "Prior(\"Weibull\", alpha=2, beta=1)"
+        },
+        "degenerate_parameters": [],
+        "fit_is_trustworthy": false,
+        "fitted_on_customers": 30000,
+        "r": {
+          "degenerate": false,
+          "hdi_high": 4.6727013960238125e-05,
+          "hdi_low": 4.2201659749102305e-05,
+          "informative": true,
+          "posterior_mean": 4.4517458697487546e-05,
+          "posterior_sd": 1.4103784282612895e-06,
+          "prior_mean": 0.870527606347162,
+          "prior_sd": 0.453553057602641,
+          "sd_ratio_posterior_over_prior": 3.10962169611681e-06
+        },
+        "sampler": {
+          "divergences": 3507,
+          "max_r_hat": 1.135311,
+          "min_ess_bulk": 20.23,
+          "passed": false
+        }
+      },
+      "trustworthy": false
+    },
+    "gamma_gamma_repeaters_only": {
+      "fitted_on": 2589,
+      "note": "Monetary value conditional on repeating cannot be estimated from customers who never repeated. Every figure derived from this model describes 3% of the base and does not generalise to the rest. It converges where BG/NBD does not because it conditions on the repeaters and estimates a spend distribution rather than a churn one.",
+      "parameters": {
+        "p": 3.9854083572038332,
+        "q": 0.5382442725949226,
+        "v": 3.6870620285959856
+      },
+      "share_of_base": 0.027668237632650444
+    }
+  },
+  "provenance": {
+    "source": "olist",
+    "split": "calibration/holdout",
+    "synthetic": false
+  },
+  "repeat_behaviour": {
+    "customers": 93573,
+    "max_repeats": 14,
+    "mean_repeats_among_repeaters": 1.112755461592671,
+    "mean_repeats_overall": 0.03374905154264585,
+    "repeat_rate": 0.030329261645987624,
+    "repeaters": 2838,
+    "with_two_or_more_repeats": 230,
+    "zero_repeat_share": 0.9696707383540124
+  },
+  "validation": {
+    "actual_mean": 0.007987266261328438,
+    "actual_total": 557.0,
+    "beats_predicting_zero": false,
+    "calibration_end": "2018-04-30",
+    "customers": 69736,
+    "customers_with_history": 69736,
+    "holdout_weeks": 16,
+    "horizon_weeks": 16.0,
+    "mean_absolute_error": 0.00852733956190811,
+    "mean_absolute_error_predicting_zero": 0.007987266261328438,
+    "metric_note": "Mean absolute error, not MAPE: the actual holdout count is zero for almost every customer and a percentage error against zero is undefined. No MAPE is computed anywhere in this project.",
+    "observation_end": "2018-08-20",
+    "predicted_mean": 0.0006256720280442931,
+    "predicted_total": 43.63186454769682,
+    "share_of_customers_predicted_below_0_1": 0.9991826316393254
+  },
+  "verdict": "BG/NBD cannot be fitted to this base by any method attempted. Maximum likelihood does not converge at any setting. MCMC runs, but drives alpha to a denormal value and throws thousands of divergences on the calibration fit, and its predictions lose to predicting zero on a time-based holdout. The purchase-rate and dropout parameters are not identified when 97% of customers never return."
+}
