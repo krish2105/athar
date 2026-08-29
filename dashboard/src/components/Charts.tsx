@@ -240,7 +240,9 @@ export function AllocationBars({
   const width = 720;
   const barHeight = 30;
   const gap = 30;
-  const padding = { top: 8, right: 24, bottom: 30, left: 210 };
+  // Wide enough for the longest allocation name at this type size. Measured
+  // rather than guessed: at 210 the longest label ran off the left edge.
+  const padding = { top: 8, right: 24, bottom: 30, left: 250 };
   const height = padding.top + rows.length * (barHeight + gap) + padding.bottom;
   const scale = width - padding.left - padding.right;
 
@@ -308,6 +310,7 @@ export function Lines({
   formatX,
   formatY,
   marker,
+  yDomain,
 }: {
   series: { key: string; label: string; color: string; points: [number, number][] }[];
   xLabel: string;
@@ -315,18 +318,39 @@ export function Lines({
   formatX: (value: number) => string;
   formatY: (value: number) => string;
   marker?: { x: number; label: string };
+  /** Fix the vertical scale. A share that cannot exceed 100% should not get a
+   *  headroom pad and an axis reading 106%, which is what the automatic domain
+   *  did on the targeting chart. */
+  yDomain?: [number, number];
 }) {
   const { setTip, node } = useTooltip();
   const [hover, setHover] = useState<number | null>(null);
   const width = 720;
   const height = 380;
-  const padding = { top: 20, right: 128, bottom: 44, left: 66 };
+  const padding = { top: 20, right: 150, bottom: 44, left: 66 };
   const xs = series.flatMap((s) => s.points.map((p) => p[0]));
   const ys = series.flatMap((s) => s.points.map((p) => p[1]));
   const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
-  const [y0, y1] = [Math.min(0, ...ys), Math.max(...ys) * 1.06];
+  const [y0, y1] = yDomain ?? [Math.min(0, ...ys), Math.max(...ys) * 1.06];
   const sx = (v: number) => padding.left + ((v - x0) / (x1 - x0)) * (width - padding.left - padding.right);
   const sy = (v: number) => height - padding.bottom - ((v - y0) / (y1 - y0)) * (height - padding.top - padding.bottom);
+
+  // Two curves that finish at the same value put their end labels in the same
+  // place. On the targeting chart both series converge on 100% by construction,
+  // so the labels printed on top of each other. Sorting by height and enforcing a
+  // minimum gap keeps each label beside its own line. The gap is measured against
+  // the rendered line box at this type size, not the nominal font size.
+  const labelY = (() => {
+    const raw = series.map((s) => sy(s.points[s.points.length - 1][1]));
+    const order = [...raw.keys()].sort((a, b) => raw[a] - raw[b]);
+    const out = [...raw];
+    order.forEach((index, rank) => {
+      if (rank === 0) return;
+      const previous = out[order[rank - 1]];
+      if (out[index] - previous < 15) out[index] = previous + 15;
+    });
+    return out;
+  })();
 
   return (
     <div style={{ position: "relative" }}>
@@ -366,9 +390,13 @@ export function Lines({
         })}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const v = x0 + (x1 - x0) * t;
+          // The first and last ticks are anchored inward. Centred, the leftmost one
+          // extends under the y-axis labels and collides with them in the corner,
+          // and the rightmost runs past the plot.
+          const anchor = t === 0 ? "start" : t === 1 ? "end" : "middle";
           return (
             <text key={t} x={sx(v)} y={height - padding.bottom + 18} fill={INK3} fontSize={11}
-                  textAnchor="middle" className="num">{formatX(v)}</text>
+                  textAnchor={anchor} className="num">{formatX(v)}</text>
           );
         })}
         <text x={width / 2} y={height - 6} fill={INK3} fontSize={11} textAnchor="middle">{xLabel}</text>
@@ -386,13 +414,22 @@ export function Lines({
           <line x1={sx(hover)} x2={sx(hover)} y1={padding.top} y2={height - padding.bottom}
                 stroke={RULE} strokeWidth={1} />
         )}
-        {series.map((s) => (
+        {series.map((s, index) => (
           <g key={s.key}>
             <path d={s.points.map((p, i) => `${i ? "L" : "M"}${sx(p[0])},${sy(p[1])}`).join(" ")}
                   fill="none" stroke={s.color} strokeWidth={2} strokeLinecap="round"
                   strokeLinejoin="round" />
-            <text x={sx(s.points[s.points.length - 1][0]) + 8}
-                  y={sy(s.points[s.points.length - 1][1]) + 4}
+            {/* A leader line, because a decluttered label no longer sits at the
+                height of its own curve and would otherwise be ambiguous. */}
+            <line
+              x1={sx(s.points[s.points.length - 1][0]) + 3}
+              x2={sx(s.points[s.points.length - 1][0]) + 7}
+              y1={sy(s.points[s.points.length - 1][1])}
+              y2={labelY[index]}
+              stroke={s.color}
+              strokeWidth={1}
+            />
+            <text x={sx(s.points[s.points.length - 1][0]) + 10} y={labelY[index] + 4}
                   fill={INK2} fontSize={11.5}>{s.label}</text>
           </g>
         ))}

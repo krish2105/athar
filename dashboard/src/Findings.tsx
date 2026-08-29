@@ -246,7 +246,7 @@ export function FindableSection() {
                 series={[
                   {
                     key: "captured",
-                    label: "captured by the ranking",
+                    label: "the ranking",
                     color: "var(--experiment)",
                     points: curve.map((r) => [r.depth, r.share_of_total_incremental]) as [
                       number,
@@ -255,7 +255,7 @@ export function FindableSection() {
                   },
                   {
                     key: "random",
-                    label: "random targeting",
+                    label: "random",
                     color: "var(--neutral)",
                     points: curve.map((r) => [r.depth, r.depth]) as [number, number][],
                   },
@@ -264,6 +264,9 @@ export function FindableSection() {
                 yLabel="share of incremental conversions"
                 formatX={(v) => pct(v, 0)}
                 formatY={(v) => pct(v, 0)}
+                // Both curves reach 100% at full depth by construction, so the
+                // scale is fixed rather than padded to a meaningless 106%.
+                yDomain={[0, 1]}
               />
             </Figure>
           </Reveal>
@@ -745,8 +748,8 @@ export function DecisionSection() {
 
   const LABELS: Record<string, string> = {
     optimal_under_truth: "Knowing the true curves",
-    mmm_with_curvature: "Media-mix model, with curvature",
-    mmm_average_roi: "Media-mix model, average ROI only",
+    mmm_with_curvature: "MMM, with curvature",
+    mmm_average_roi: "MMM, average ROI",
     experiment: "Geo experiments",
     attribution_lastclick: "Last-click attribution",
     equal_split: "Equal split",
