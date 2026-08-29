@@ -117,10 +117,20 @@ def main():
     try:
         from econml.dml import CausalForestDML
 
-        # Fitted on a subsample: a causal forest on three million rows exhausts
-        # memory on this machine, and the subsample size is reported so the
-        # comparison against the meta-learners is not read as like-for-like.
+        # Fitted on a subsample, drawn at RANDOM. Taking the first N rows instead
+        # produced a slice that was 99.3% treated against a true 0.85 — the file
+        # is strongly ordered by arm — and the forest failed outright because a
+        # cross-fitting fold contained only one treatment class. A head slice of
+        # this file is not a sample of it, and the failure was the good outcome:
+        # a slightly less skewed slice would have fitted and been quietly wrong.
+        #
+        # The subsample exists because a causal forest on five million rows
+        # exhausts memory here, and its size is reported so the comparison against
+        # the meta-learners is not read as like-for-like.
         forest_rows = min(400_000, len(features_train))
+        forest_index = np.random.default_rng(SEED).choice(
+            len(features_train), size=forest_rows, replace=False
+        )
         # discrete_treatment is not optional here. The arm is binary, and the
         # default treats it as continuous — which on features this repetitive
         # produced a singular matrix in the first stage rather than a fit.
@@ -131,9 +141,9 @@ def main():
             random_state=SEED,
         )
         forest.fit(
-            outcome_train[:forest_rows],
-            treatment_train[:forest_rows],
-            X=features_train[:forest_rows],
+            outcome_train[forest_index],
+            treatment_train[forest_index],
+            X=features_train[forest_index],
         )
         scores["causal_forest"] = np.asarray(forest.effect(features_test)).ravel()
     except Exception as error:  # noqa: BLE001
@@ -186,6 +196,15 @@ def main():
                 "metrics/criteo.json and use no sample at all."
             ),
             "causal_forest_train_rows": forest_rows,
+            "causal_forest_subsample": "random, not the first N rows",
+            "file_ordering_note": (
+                "The Criteo file is strongly ordered by treatment arm: the first "
+                "200,000 rows of a random 1M sample's training half are 99.3% treated "
+                "against a population rate of 85%. Every sample in this project is drawn "
+                "at random for that reason, and any analysis of this file that slices "
+                "rather than samples will be comparing a near-treated-only group against "
+                "the population."
+            ),
         },
         "evaluation": {
             "propensity": (

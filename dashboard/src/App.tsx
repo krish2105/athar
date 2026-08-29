@@ -4,6 +4,7 @@ import { artifact, available } from "./data";
 import { count, pct, ratio } from "./lib/format";
 import {
   AttributionSection,
+  FindableSection,
   ClvSection,
   DecisionSection,
   ExperimentSection,
@@ -256,6 +257,7 @@ export default function App() {
           <>
             <Hero />
             <WhatIsReal />
+            <FindableSection />
             <AttributionSection />
             <RecoverySection />
             <ExperimentSection />

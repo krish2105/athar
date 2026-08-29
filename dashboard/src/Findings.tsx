@@ -110,6 +110,172 @@ export function AttributionSection() {
   );
 }
 
+
+/* ------------------------------------------------------------------ */
+
+export function FindableSection() {
+  if (!available("uplift", "criteo")) return null;
+  const uplift = artifact("uplift")!;
+  const models = uplift.models as Record<string, any>;
+  const verdict = uplift.verdict;
+
+  const ranked = Object.entries(models)
+    .filter(([name]) => name !== "random_baseline")
+    .sort((a, b) => b[1].qini - a[1].qini);
+  const best = ranked[0];
+  const curve = best ? (models[best[0]].targeting_curve as any[]) : [];
+
+  return (
+    <section id="findable">
+      <div className="shell split">
+        <div className="sticky">
+          <p className="eyebrow">Is the effect findable</p>
+          <h2>Real on average is not the same as locatable.</h2>
+          <p style={{ marginTop: "1.3rem" }}>
+            The trial says advertising worked. It says so as an average over fourteen million
+            people, almost none of whom were ever going to convert. The question a marketer
+            actually faces is narrower: given the features available, can a model rank people
+            by how much advertising moves them?
+          </p>
+          <p>
+            Qini answers exactly that and nothing more. It subtracts the random-targeting
+            line, so a score with no uplift signal scores zero however large the average
+            effect happens to be.
+          </p>
+          <p>
+            The binding constraint is not the{" "}
+            <span className="num">{count(uplift.sample.test_rows)}</span> rows in the held-out
+            half but the{" "}
+            <span className="num">{count(uplift.sample.test_control_converters)}</span>{" "}
+            control-arm converters inside it. Every interval below is built from those.
+          </p>
+        </div>
+        <Reveal>
+          <Figure
+            title="Ranking quality, against random targeting"
+            artifactName="uplift"
+            note={
+              <>
+                {uplift.evaluation.interval}. {uplift.evaluation.exposure_note}{" "}
+                {uplift.evaluation.propensity}
+              </>
+            }
+            table={
+              <table>
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Qini</th>
+                    <th>95% interval</th>
+                    <th>Beats random</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(models)
+                    .sort((a, b) => b[1].qini - a[1].qini)
+                    .map(([name, r]: [string, any]) => (
+                      <tr key={name}>
+                        <td>{name.replace(/_/g, " ")}</td>
+                        <td className="num">{r.qini.toFixed(1)}</td>
+                        <td className="num">
+                          {r.ci_low.toFixed(1)} – {r.ci_high.toFixed(1)}
+                        </td>
+                        <td>{r.beats_random ? "yes" : "no"}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            }
+          >
+            <Intervals
+              rows={Object.entries(models).map(([name, r]: [string, any]) => ({
+                key: name,
+                label: name.replace(/_/g, " "),
+                low: r.ci_low,
+                high: r.ci_high,
+                mean: r.qini,
+                truth: 0,
+                covered: !r.beats_random,
+              }))}
+              color="var(--experiment)"
+              format={(v) => v.toFixed(0)}
+            />
+          </Figure>
+        </Reveal>
+      </div>
+
+      {curve.length > 0 && (
+        <div className="shell" style={{ marginTop: "2.5rem" }}>
+          <Reveal>
+            <Figure
+              title={`What targeting the top slice buys — ${best[0].replace(/_/g, " ")}`}
+              artifactName="uplift"
+              note="Incremental conversions captured by targeting the highest-ranked share of the population, against what that share would capture at random. A ranking worth acting on captures appreciably more than its depth."
+              table={
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Depth</th>
+                      <th>Incremental conversions</th>
+                      <th>Share of total</th>
+                      <th>Lift over random</th>
+                      <th>Control converters in slice</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {curve.map((row) => (
+                      <tr key={row.depth}>
+                        <td className="num">{pct(row.depth, 0)}</td>
+                        <td className="num">{row.incremental_conversions.toFixed(0)}</td>
+                        <td className="num">{pct(row.share_of_total_incremental, 1)}</td>
+                        <td className="num">{row.lift_over_random.toFixed(2)}×</td>
+                        <td className="num">{count(row.control_converters_in_slice)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              }
+            >
+              <Lines
+                series={[
+                  {
+                    key: "captured",
+                    label: "captured by the ranking",
+                    color: "var(--experiment)",
+                    points: curve.map((r) => [r.depth, r.share_of_total_incremental]) as [
+                      number,
+                      number,
+                    ][],
+                  },
+                  {
+                    key: "random",
+                    label: "random targeting",
+                    color: "var(--neutral)",
+                    points: curve.map((r) => [r.depth, r.depth]) as [number, number][],
+                  },
+                ]}
+                xLabel="share of the population targeted"
+                yLabel="share of incremental conversions"
+                formatX={(v) => pct(v, 0)}
+                formatY={(v) => pct(v, 0)}
+              />
+            </Figure>
+          </Reveal>
+        </div>
+      )}
+
+      <div className="shell" style={{ marginTop: "2rem" }}>
+        <p className="footnote" style={{ maxWidth: "72ch" }}>
+          <strong>Verdict.</strong>{" "}
+          {verdict.any_model_beats_random
+            ? `${verdict.best_model.replace(/_/g, " ")} ranks better than random at ${verdict.best_qini.toFixed(0)}, and its interval excludes zero. The effect is not only real on average, it is concentrated somewhere the features can find.`
+            : "No model beat random targeting. That is a statement about what twelve anonymised and heavily repeated features support, not about uplift modelling."}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 
 export function RecoverySection() {

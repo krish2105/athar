@@ -2,6 +2,7 @@ import { useTheme, type Theme } from "../lib/useTheme";
 
 const SECTIONS = [
   ["evidence", "The real number"],
+  ["findable", "Findable?"],
   ["attribution", "Attribution"],
   ["recovery", "Recovery"],
   ["experiment", "Experiments"],
