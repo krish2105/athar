@@ -113,10 +113,15 @@ export function AttributionSection() {
 /* ------------------------------------------------------------------ */
 
 export function RecoverySection() {
+  // Hooks first, unconditionally. The early return below is safe in practice —
+  // the artifact set is fixed when the bundle is built — but a hook after a
+  // conditional return is a rule-of-hooks violation regardless of whether this
+  // particular condition can change, and it would become a real bug the moment
+  // the data were loaded at runtime.
+  const [arm, setArm] = useState<"misspecified" | "matched">("misspecified");
   if (!available("mmm")) return null;
   const mmm = artifact("mmm")!;
   const recovery = artifact("recovery");
-  const [arm, setArm] = useState<"misspecified" | "matched">("misspecified");
   const fit = mmm.fits[arm];
   const channels = Object.entries(fit.average_roi.channels) as [string, any][];
   const summary = fit.average_roi.summary;
@@ -307,10 +312,10 @@ export function RecoverySection() {
 /* ------------------------------------------------------------------ */
 
 export function ExperimentSection() {
-  if (!available("experiments")) return null;
-  const experiments = artifact("experiments")!;
-  const channels = Object.keys(experiments.power);
-  const [channel, setChannel] = useState(channels[0]);
+  const experiments = artifact("experiments");
+  const channels = experiments ? Object.keys(experiments.power) : [];
+  const [channel, setChannel] = useState(channels[0] ?? "");
+  if (!experiments) return null;
   const curve = experiments.power[channel] as any[];
 
   return (
@@ -547,11 +552,11 @@ export function ClvSection() {
 /* ------------------------------------------------------------------ */
 
 export function DecisionSection() {
+  const [theme] = useTheme();
+  const dark = useResolvedTheme(theme) === "dark";
   if (!available("triangulation", "allocator")) return null;
   const triangulation = artifact("triangulation")!;
   const allocator = artifact("allocator")!;
-  const [theme] = useTheme();
-  const dark = useResolvedTheme(theme) === "dark";
 
   const channels = allocator.channels as string[];
   const headline = triangulation.headline;
