@@ -50,6 +50,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 __all__ = [
     "REAL_SOURCES",
     "SYNTHETIC_CAVEAT",
@@ -311,8 +313,30 @@ def write_metric(name: str, payload: Any, provenance: Provenance, directory: Pat
     directory.mkdir(parents=True, exist_ok=True)
     document = {**payload, "provenance": provenance.to_dict()}
     path = directory / f"{name}.json"
-    path.write_text(json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+    path.write_text(
+        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False, default=_plain) + "\n"
+    )
     return path
+
+
+def _plain(value: Any) -> Any:
+    """Convert NumPy scalars and arrays to something json can write.
+
+    Library outputs arrive as ``np.float64`` and friends more often than not, and
+    ``json.dumps`` refuses them. Failing at the final write, after an hour of
+    sampling, is the worst possible moment to discover that.
+
+    Raises
+    ------
+    TypeError
+        For anything genuinely unserialisable, rather than coercing it to a string
+        and quietly writing nonsense into an artifact.
+    """
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    raise TypeError(f"cannot serialise {type(value).__name__} into a metrics artifact")
 
 
 def read_metric(name: str, directory: Path) -> dict[str, Any]:

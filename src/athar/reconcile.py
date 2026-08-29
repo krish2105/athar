@@ -241,10 +241,19 @@ def cost_of_believing(
         allocations[name] = allocate.allocate_linear(
             {channel: roi[channel] for channel in channels}, budget, bounds
         )
+    failed: dict[str, str] = {}
     if mmm_responses:
-        allocations["mmm_with_curvature"] = allocate.allocate_concave(
-            mmm_responses, budget, bounds, channels
-        )
+        # The only allocation here that optimises over a *fitted* surface rather
+        # than a known one. A weakly identified posterior can produce a response
+        # curve flat or bumpy enough that no start converges, and that is a result
+        # about the model rather than a reason to lose every other allocation.
+        try:
+            allocations["mmm_with_curvature"] = allocate.allocate_concave(
+                mmm_responses, budget, bounds, channels
+            )
+        except RuntimeError as error:
+            failed["mmm_with_curvature"] = str(error)
+            log.warning("curved allocation from the fitted response did not converge: %s", error)
 
     # An even split: the allocation a planner reaches for when they distrust every
     # number on the table. Worth knowing, because an estimator that cannot beat it
@@ -268,6 +277,7 @@ def cost_of_believing(
                 "would be against a caricature no marketing organisation resembles."
             ),
         },
+        "allocations_that_failed": failed,
         "allocations": {
             name: {
                 "spend": allocation,

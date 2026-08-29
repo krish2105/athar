@@ -123,3 +123,38 @@ def test_every_committed_artifact_declares_its_provenance():
             assert block.get("caveat", "").startswith("SYNTHETIC"), (
                 f"{path.name} is synthetic but carries no caveat"
             )
+
+
+def test_numpy_values_survive_the_write(tmp_path):
+    """Library outputs arrive as numpy scalars far more often than not.
+
+    json refuses them, and failing at the final write after an hour of sampling is
+    the worst possible moment to find that out.
+    """
+    import numpy as np
+
+    path = write_metric(
+        "numpy",
+        {"scalar": np.float64(1.5), "count": np.int64(3), "array": np.array([1.0, 2.0])},
+        Provenance(source="criteo", synthetic=False, split="full"),
+        tmp_path,
+    )
+    loaded = json.loads(path.read_text())
+    assert loaded["scalar"] == 1.5
+    assert loaded["count"] == 3
+    assert loaded["array"] == [1.0, 2.0]
+
+
+def test_something_genuinely_unserialisable_is_refused(tmp_path):
+    """An unknown object is refused rather than coerced.
+
+    Writing its repr would put nonsense into an artifact that a report then quotes
+    as a number.
+    """
+    with pytest.raises(TypeError, match="cannot serialise"):
+        write_metric(
+            "bad",
+            {"value": object()},
+            Provenance(source="criteo", synthetic=False),
+            tmp_path,
+        )
