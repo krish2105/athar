@@ -57,7 +57,25 @@ Random assignment used as an instrument for exposure. This is the defensible ver
 
 ## Is the effect findable
 
-`metrics/uplift.json` not present.
+Four learners and a random-targeting baseline, scored by Qini on a held-out half
+with a 95% bootstrap interval. Qini subtracts the random-targeting line, so it scores only what the ranking contributed. A model with no uplift signal scores zero however large the average treatment effect happens to be.
+
+Test half carries 1,434 control-arm
+converters, which is what bounds the precision below — not the
+5,000,027 rows.
+
+| Model | Qini | CI low | CI high | Beats random |
+|---|---:|---:|---:|---|
+| s_learner | 1757.45939 | 1495.49930 | 2004.72002 | yes |
+| causal_forest | 1753.15627 | 1487.78578 | 2001.70695 | yes |
+| x_learner | 1432.09979 | 1404.42346 | 1836.40007 | yes |
+| t_learner | 1319.66180 | 1026.25340 | 1530.45787 | yes |
+| random_baseline | 16.61921 | -85.19903 | 106.20648 | no |
+
+Best model: **s_learner** at 1757.45939.
+Any model beats random: **True**.
+
+Every model is trained and scored against `treatment`, the randomised arm. `exposure` is post-treatment and is never conditioned on.
 
 ## Effective sample size
 
