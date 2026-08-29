@@ -1,9 +1,18 @@
-# Lint and test on every push.
+# What CI can honestly check, and what it cannot.
 #
-# Deliberately does not run `make all`. The pipeline reads Olist and Criteo from a
-# shared data store outside the repository which is not redistributable, and forty
-# full-posterior fits are not a CI job. What CI can check is that the library is
-# clean, the tests pass, and the dashboard still builds — which is what it checks.
+# The dashboard job is complete: it type-checks and builds the page from the
+# committed metrics artifacts, which is the whole of that surface.
+#
+# The Python job is gated on a token, and is skipped by default. ATHAR depends on
+# SPINE as an editable path dependency at `../01-spine`, and SPINE is a private
+# repository. `actions/checkout` cannot place a repository outside the workspace,
+# and cloning a private repo needs a credential this repository does not carry. So
+# rather than let the job fail and leave a red badge that means nothing, it runs
+# only when a `SPINE_TOKEN` secret exists.
+#
+# Until then, `make lint` and `make test` are the local gate, and the README says
+# so. Making SPINE public, or adding the secret, turns this on with no other
+# change.
 
 name: checks
 
@@ -14,22 +23,42 @@ on:
   workflow_dispatch:
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      spine: ${{ steps.check.outputs.spine }}
+    steps:
+      - id: check
+        env:
+          SPINE_TOKEN: ${{ secrets.SPINE_TOKEN }}
+        run: echo "spine=${{ env.SPINE_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+
   python:
+    needs: gate
+    if: needs.gate.outputs.spine == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: athar
       - uses: actions/checkout@v4
         with:
           repository: krish2105/spine
-          path: ../01-spine
-        continue-on-error: true
+          token: ${{ secrets.SPINE_TOKEN }}
+          path: spine
+      - name: Put SPINE where the path dependency expects it
+        run: mv spine "$(dirname "$GITHUB_WORKSPACE")/01-spine" || mv spine ../01-spine
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - run: uv sync --all-extras
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run pytest -q
+      - working-directory: athar
+        run: uv sync --all-extras
+      - working-directory: athar
+        run: uv run ruff check .
+      - working-directory: athar
+        run: uv run ruff format --check .
+      - working-directory: athar
+        run: uv run pytest -q
 
   dashboard:
     runs-on: ubuntu-latest
@@ -46,3 +75,5 @@ jobs:
       - run: npm ci
       - run: npx tsc -b
       - run: npm run build
+      - name: The build must not have changed the committed page
+        run: git diff --exit-code ../docs

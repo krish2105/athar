@@ -98,6 +98,13 @@ redistributable here — see `data/README.md` in the parent directory.
 make all
 ```
 
+`make lint` and `make test` are the gate that matters, and they run locally.
+Continuous integration builds the dashboard and checks that the committed page
+matches its source, but skips the Python job by default: ATHAR depends on SPINE as
+an editable path dependency and SPINE is private, so CI cannot clone it without a
+credential this repository does not carry. `.github/workflows/checks.yml` says so
+in full rather than failing quietly.
+
 `lint` → `test` → `gate` → `frame` → `criteo` → `panel` → `mmm` → `uplift` → `clv`
 → `experiments` → `recovery` → `triangulate` → `notebooks` → `reports` → `card` →
 `dashboard`.
