@@ -42,6 +42,11 @@ BAYES_DRAWS = 1000
 #: the finding lives, and for every descriptive figure.
 BAYES_MAX_CUSTOMERS = 30_000
 
+#: Every random draw in this script — the MCMC chains and the subsample — comes
+#: from this. Recorded in the artifact, because a result whose seed is not written
+#: down is a result nobody can reproduce.
+SEED = 20260829
+
 
 def main():
     processed = paths.processed_dir()
@@ -79,7 +84,11 @@ def main():
 
     log.info("fitting BG/NBD by MCMC (the only fit available on this base)")
     bayesian, movement = clv.fit_bgnbd_bayesian(
-        summary, draws=BAYES_DRAWS, tune=BAYES_DRAWS, max_customers=BAYES_MAX_CUSTOMERS
+        summary,
+        draws=BAYES_DRAWS,
+        tune=BAYES_DRAWS,
+        seed=SEED,
+        max_customers=BAYES_MAX_CUSTOMERS,
     )
     for name, entry in movement.items():
         if not isinstance(entry, dict) or "posterior_mean" not in entry:
@@ -112,7 +121,11 @@ def main():
 
     split = clv.calibration_holdout(orders, cutoff, observation_end)
     calibration_model, _ = clv.fit_bgnbd_bayesian(
-        split, draws=BAYES_DRAWS, tune=BAYES_DRAWS, max_customers=BAYES_MAX_CUSTOMERS
+        split,
+        draws=BAYES_DRAWS,
+        tune=BAYES_DRAWS,
+        seed=SEED,
+        max_customers=BAYES_MAX_CUSTOMERS,
     )
 
     horizon_weeks = float(split["holdout_weeks"].iloc[0])
@@ -186,6 +199,19 @@ def main():
         return float(value) if np.isfinite(value) else None
 
     payload = {
+        "reproducibility": {
+            "seed": SEED,
+            "mcmc_draws": BAYES_DRAWS,
+            "mcmc_tune": BAYES_DRAWS,
+            "mcmc_chains": 4,
+            "mcmc_subsample": BAYES_MAX_CUSTOMERS,
+            "holdout_weeks": HOLDOUT_WEEKS,
+            "note": (
+                "The maximum-likelihood attempts and every descriptive figure use the "
+                "full base; only the MCMC fit is subsampled, and BG/NBD has four "
+                "parameters."
+            ),
+        },
         "repeat_behaviour": behaviour,
         "maximum_likelihood": {
             "converged_on_full_base": int(converged_full),
