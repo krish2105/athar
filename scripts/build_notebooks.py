@@ -14,6 +14,7 @@ Run: `make notebooks-src`
 
 import json
 import logging
+import subprocess
 
 from athar import paths
 
@@ -1030,6 +1031,23 @@ def main():
         path = directory / f"{name}.ipynb"
         path.write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n")
         log.info("wrote %s (%d cells)", path.name, len(content["cells"]))
+
+    # Format what was just written. This repository lints its notebooks, and code
+    # written by hand into a generator's string literals will not match the
+    # formatter's output — so `make lint` failed on freshly generated notebooks
+    # until this ran. Formatting here keeps regeneration self-consistent instead
+    # of leaving a step for someone to remember.
+    result = subprocess.run(
+        ["uv", "run", "ruff", "format", "--quiet", str(directory)],
+        capture_output=True,
+        text=True,
+        cwd=paths.project_root(),
+        check=False,
+    )
+    if result.returncode != 0:
+        log.warning("ruff format on the notebooks failed: %s", result.stderr.strip())
+    else:
+        log.info("formatted %s", directory.name)
     return 0
 
 
