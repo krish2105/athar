@@ -399,8 +399,17 @@ export function Heatmap({
 
   return (
     <div style={{ position: "relative", overflowX: "auto" }}>
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{ minWidth: 460 }}
-           role="img" aria-label={caption ?? "Coverage grid"}>
+      {/* A grid this narrow — a handful of columns — must not stretch to the
+          container. Doing so preserves the aspect ratio and produced a heatmap
+          twelve hundred pixels tall for eight cells. It scales down to fit a
+          phone and stops growing at its natural size. */}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        style={{ minWidth: 340, maxWidth: width * 1.5, display: "block" }}
+        role="img"
+        aria-label={caption ?? "Coverage grid"}
+      >
         {columns.map((column, columnIndex) => (
           <text key={column} x={padding.left + columnIndex * cell + cell / 2} y={padding.top - 12}
                 fill={INK3} fontSize={11} textAnchor="middle">{column}</text>

@@ -1,0 +1,694 @@
+{
+  "design": {
+    "baseline": "real Olist weekly revenue",
+    "channels": [
+      "search_brand",
+      "search_nonbrand",
+      "social_paid",
+      "display_prog",
+      "video_ctv"
+    ],
+    "hdi_prob": 0.89,
+    "headline": "misspecified",
+    "headline_reason": "It is the situation an analyst is actually in. The matched arm is a control that separates the cost of the wrong functional form from the cost of a design that cannot identify the parameters.",
+    "priors": "pymc-marketing defaults, unchanged",
+    "specifications": {
+      "matched": "DelayedAdstock + HillSaturation — the generating form, as a control",
+      "misspecified": "GeometricAdstock + LogisticSaturation — cannot express the generating form"
+    },
+    "weeks": 85
+  },
+  "fits": {
+    "matched": {
+      "average_roi": {
+        "channels": {
+          "display_prog": {
+            "absolute_error": 8.345384924476969,
+            "covered": true,
+            "estimated_mean": 9.24538492447697,
+            "hdi_high": 24.27080115586135,
+            "hdi_low": 0.00019718372172417952,
+            "interval_width": 24.270603972139625,
+            "relative_error": 9.27264991608552,
+            "true": 0.9000000000000001
+          },
+          "search_brand": {
+            "absolute_error": 13.623479095813101,
+            "covered": true,
+            "estimated_mean": 15.2234790958131,
+            "hdi_high": 43.64010572032455,
+            "hdi_low": 6.655712382578535e-05,
+            "interval_width": 43.640039163200726,
+            "relative_error": 8.514674434883187,
+            "true": 1.6000000000000003
+          },
+          "search_nonbrand": {
+            "absolute_error": 5.698530885659865,
+            "covered": true,
+            "estimated_mean": 8.498530885659866,
+            "hdi_high": 24.58604131812542,
+            "hdi_low": 2.093072759875148e-05,
+            "interval_width": 24.586020387397824,
+            "relative_error": 2.0351896020213793,
+            "true": 2.800000000000001
+          },
+          "social_paid": {
+            "absolute_error": 8.16670488433004,
+            "covered": true,
+            "estimated_mean": 10.266704884330041,
+            "hdi_high": 30.853660748363602,
+            "hdi_low": 5.475589766810221e-05,
+            "interval_width": 30.853605992465933,
+            "relative_error": 3.8889070877762073,
+            "true": 2.100000000000001
+          },
+          "video_ctv": {
+            "absolute_error": 13.564305367081321,
+            "covered": true,
+            "estimated_mean": 16.06430536708132,
+            "hdi_high": 44.26452015445523,
+            "hdi_low": 5.448466101669914e-05,
+            "interval_width": 44.26446566979421,
+            "relative_error": 5.425722146832529,
+            "true": 2.5
+          }
+        },
+        "summary": {
+          "channels_covered": 5,
+          "channels_total": 5,
+          "coverage_rate": 1.0,
+          "hdi_prob": 0.89,
+          "mean_interval_width": 33.52294703699967,
+          "median_absolute_relative_error": 5.425722146832529
+        }
+      },
+      "diagnostics": {
+        "criteria": "divergence rate < 0.5% of post-warmup draws, max R-hat < 1.01, min bulk ESS >= 400.0",
+        "criteria_strict": "zero divergences, max R-hat < 1.01, min bulk ESS >= 400.0",
+        "divergence_rate": 0.00125,
+        "divergences": 5,
+        "max_r_hat": 1.01008,
+        "min_ess_bulk": 653.35,
+        "passed": false,
+        "passed_strict": false,
+        "post_warmup_draws": 4000
+      },
+      "marginal_roi": {
+        "channels": {
+          "display_prog": {
+            "absolute_error": 0.20406861353792694,
+            "covered": true,
+            "estimated_mean": 0.7844294768053418,
+            "hdi_high": 1.7273669051953862,
+            "hdi_low": 0.0004077021045799975,
+            "interval_width": 1.726959203090806,
+            "relative_error": 0.35162366460933736,
+            "true": 0.5803608632674149
+          },
+          "search_brand": {
+            "absolute_error": 0.215139484292733,
+            "covered": true,
+            "estimated_mean": 1.1727718495336066,
+            "hdi_high": 2.6442092183226142,
+            "hdi_low": 1.7476972169627996e-05,
+            "interval_width": 2.6441917413504448,
+            "relative_error": 0.22465769965765392,
+            "true": 0.9576323652408736
+          },
+          "search_nonbrand": {
+            "absolute_error": -1.3794843364268325,
+            "covered": false,
+            "estimated_mean": 0.5218123863302544,
+            "hdi_high": 1.2227233416058112,
+            "hdi_low": 5.104745104282845e-06,
+            "interval_width": 1.222718236860707,
+            "relative_error": -0.7255492106599912,
+            "true": 1.901296722757087
+          },
+          "social_paid": {
+            "absolute_error": -0.682018555472319,
+            "covered": true,
+            "estimated_mean": 0.8014953689687032,
+            "hdi_high": 1.8183994644979249,
+            "hdi_low": 5.89478490691559e-05,
+            "interval_width": 1.8183405166488558,
+            "relative_error": -0.4597318193216817,
+            "true": 1.4835139244410223
+          },
+          "video_ctv": {
+            "absolute_error": -0.7352697827336923,
+            "covered": true,
+            "estimated_mean": 2.0487174834275415,
+            "hdi_high": 4.705266783091369,
+            "hdi_low": 3.969138549044242e-09,
+            "interval_width": 4.70526677912223,
+            "relative_error": -0.2641067334146022,
+            "true": 2.7839872661612337
+          }
+        },
+        "summary": {
+          "channels_covered": 4,
+          "channels_total": 5,
+          "coverage_rate": 0.8,
+          "hdi_prob": 0.89,
+          "mean_interval_width": 2.4234952954146087,
+          "median_absolute_relative_error": 0.35162366460933736
+        }
+      },
+      "recovered_parameters": {
+        "display_prog": {
+          "adstock_params": {
+            "alpha": 0.21522534623575879,
+            "theta": 0.7018029470141953
+          },
+          "saturation_params": {
+            "beta": 0.20843013487407375,
+            "kappa": 1.6329181057822657,
+            "slope": 1.3876133071734498
+          }
+        },
+        "search_brand": {
+          "adstock_params": {
+            "alpha": 0.20102971984872536,
+            "theta": 0.7284771333180436
+          },
+          "saturation_params": {
+            "beta": 0.2107404998101573,
+            "kappa": 1.3537690486617893,
+            "slope": 0.7093341222758731
+          }
+        },
+        "search_nonbrand": {
+          "adstock_params": {
+            "alpha": 0.20206502043226773,
+            "theta": 0.7574108827385465
+          },
+          "saturation_params": {
+            "beta": 0.18323098044967812,
+            "kappa": 1.4522712301489493,
+            "slope": 0.7854615186262501
+          }
+        },
+        "social_paid": {
+          "adstock_params": {
+            "alpha": 0.20577231687816167,
+            "theta": 0.807622472576087
+          },
+          "saturation_params": {
+            "beta": 0.2010013679544828,
+            "kappa": 1.4607114254624487,
+            "slope": 0.9044847835861336
+          }
+        },
+        "video_ctv": {
+          "adstock_params": {
+            "alpha": 0.21627670665968374,
+            "theta": 1.1023265163467624
+          },
+          "saturation_params": {
+            "beta": 0.34606267376161787,
+            "kappa": 1.3639099874720775,
+            "slope": 0.65966768041217
+          }
+        }
+      },
+      "response_curve": {
+        "median_revenue": {
+          "display_prog": [
+            0.0,
+            7633.757657730412,
+            20081.026181661196,
+            35786.93597190573,
+            54351.792778893585,
+            73951.44364585496,
+            93535.29874975052,
+            115654.70290519862,
+            140316.72175811083,
+            165895.58458513627,
+            191669.80244964693,
+            222367.20124681335,
+            253516.16670492777,
+            281801.09449644387,
+            315595.3105753624,
+            353863.320812087,
+            388799.2107907341,
+            424670.2733917419,
+            456618.046896458,
+            492277.3615518864,
+            523162.0472800236
+          ],
+          "search_brand": [
+            0.0,
+            346343.32602398825,
+            470904.73588411027,
+            545713.777483252,
+            616714.1644903689,
+            685231.8944009384,
+            733183.2244246008,
+            781226.4453323006,
+            830827.7585081445,
+            881832.3555093707,
+            921372.0522014499,
+            961015.1053726198,
+            1027291.8333392305,
+            1075870.5531487267,
+            1140226.3934141165,
+            1206225.9715086813,
+            1267183.1019313545,
+            1342338.0008883795,
+            1414160.1860591602,
+            1477472.8252198845,
+            1546024.603669989
+          ],
+          "search_nonbrand": [
+            0.0,
+            184133.8793200907,
+            268756.42745431745,
+            325584.3647470741,
+            363004.5906891384,
+            415024.13844228577,
+            459819.5131834732,
+            499525.56534133083,
+            546391.417255394,
+            594864.9609640462,
+            632605.5027686369,
+            691241.8704947503,
+            747288.2747360693,
+            810858.9568567782,
+            869078.0174699118,
+            925171.7525178631,
+            990583.9546424446,
+            1054370.6946404276,
+            1127213.345637655,
+            1186601.0784063332,
+            1255722.6791162903
+          ],
+          "social_paid": [
+            0.0,
+            139766.3713067923,
+            217919.81820466375,
+            273722.81601698656,
+            331018.94755123823,
+            385699.16530364775,
+            438319.95899664774,
+            489825.7585810177,
+            549776.506072844,
+            612009.7798716635,
+            680827.5494954264,
+            755589.9907840164,
+            840195.222020371,
+            924652.0304055925,
+            996441.1524832675,
+            1067802.6485025059,
+            1142576.8666521055,
+            1234404.4449564684,
+            1314911.4494978376,
+            1399827.0347967423,
+            1503608.0541392625
+          ],
+          "video_ctv": [
+            0.0,
+            513063.8666106746,
+            774944.940711072,
+            941806.6066893104,
+            1098618.2598339564,
+            1240766.2540515736,
+            1365401.8030509208,
+            1486424.8811652497,
+            1598509.9402554077,
+            1705911.5267308175,
+            1787318.2356816567,
+            1899889.3888061373,
+            2012421.9703968703,
+            2103342.2972965934,
+            2204435.811124147,
+            2333285.847802333,
+            2457329.3780973963,
+            2554070.237579254,
+            2657174.62803289,
+            2769156.8026681463,
+            2887813.651708587
+          ]
+        },
+        "multipliers": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ]
+      }
+    },
+    "misspecified": {
+      "average_roi": {
+        "channels": {
+          "display_prog": {
+            "absolute_error": 0.23413589795099266,
+            "covered": true,
+            "estimated_mean": 1.1341358979509928,
+            "hdi_high": 2.4706305483957327,
+            "hdi_low": 6.143568470367485e-05,
+            "interval_width": 2.470569112711029,
+            "relative_error": 0.2601509977233252,
+            "true": 0.9000000000000001
+          },
+          "search_brand": {
+            "absolute_error": -0.01414463062377469,
+            "covered": true,
+            "estimated_mean": 1.5858553693762256,
+            "hdi_high": 3.543755626249288,
+            "hdi_low": 0.00023194372941152212,
+            "interval_width": 3.5435236825198766,
+            "relative_error": -0.008840394139859153,
+            "true": 1.6000000000000003
+          },
+          "search_nonbrand": {
+            "absolute_error": -2.1188506530334035,
+            "covered": false,
+            "estimated_mean": 0.6811493469665975,
+            "hdi_high": 1.491810947387909,
+            "hdi_low": 1.063397910830084e-05,
+            "interval_width": 1.4918003134088007,
+            "relative_error": -0.7567323760833582,
+            "true": 2.800000000000001
+          },
+          "social_paid": {
+            "absolute_error": -1.212579102228798,
+            "covered": false,
+            "estimated_mean": 0.887420897771203,
+            "hdi_high": 1.9190416543543622,
+            "hdi_low": 0.00033212840858104335,
+            "interval_width": 1.9187095259457811,
+            "relative_error": -0.5774186201089511,
+            "true": 2.100000000000001
+          },
+          "video_ctv": {
+            "absolute_error": 0.28902483721391503,
+            "covered": true,
+            "estimated_mean": 2.789024837213915,
+            "hdi_high": 6.175326672711337,
+            "hdi_low": 0.00024506134057779815,
+            "interval_width": 6.17508161137076,
+            "relative_error": 0.11560993488556592,
+            "true": 2.5
+          }
+        },
+        "summary": {
+          "channels_covered": 3,
+          "channels_total": 5,
+          "coverage_rate": 0.6,
+          "hdi_prob": 0.89,
+          "mean_interval_width": 3.1199368491912494,
+          "median_absolute_relative_error": 0.2601509977233252
+        }
+      },
+      "diagnostics": {
+        "criteria": "divergence rate < 0.5% of post-warmup draws, max R-hat < 1.01, min bulk ESS >= 400.0",
+        "criteria_strict": "zero divergences, max R-hat < 1.01, min bulk ESS >= 400.0",
+        "divergence_rate": 0.00075,
+        "divergences": 3,
+        "max_r_hat": 1.003461,
+        "min_ess_bulk": 1400.39,
+        "passed": true,
+        "passed_strict": false,
+        "post_warmup_draws": 4000
+      },
+      "marginal_roi": {
+        "channels": {
+          "display_prog": {
+            "absolute_error": 0.45425282349835183,
+            "covered": true,
+            "estimated_mean": 1.0346136867657667,
+            "hdi_high": 2.2539464623604313,
+            "hdi_low": 5.6660667072328415e-05,
+            "interval_width": 2.253889801693359,
+            "relative_error": 0.7827075398243113,
+            "true": 0.5803608632674149
+          },
+          "search_brand": {
+            "absolute_error": 0.40542768240839755,
+            "covered": true,
+            "estimated_mean": 1.3630600476492711,
+            "hdi_high": 3.0268206795774697,
+            "hdi_low": 0.00014403874367439768,
+            "interval_width": 3.0266766408337955,
+            "relative_error": 0.42336464088326853,
+            "true": 0.9576323652408736
+          },
+          "search_nonbrand": {
+            "absolute_error": -1.3244211535872297,
+            "covered": false,
+            "estimated_mean": 0.5768755691698572,
+            "hdi_high": 1.3009260874100526,
+            "hdi_low": 9.479377690554376e-06,
+            "interval_width": 1.300916608032362,
+            "relative_error": -0.6965883534826038,
+            "true": 1.901296722757087
+          },
+          "social_paid": {
+            "absolute_error": -0.7538293854205167,
+            "covered": true,
+            "estimated_mean": 0.7296845390205056,
+            "hdi_high": 1.595856864231253,
+            "hdi_low": 0.00015954194809621536,
+            "interval_width": 1.5956973222831567,
+            "relative_error": -0.5081377215279961,
+            "true": 1.4835139244410223
+          },
+          "video_ctv": {
+            "absolute_error": -0.40471425236673,
+            "covered": true,
+            "estimated_mean": 2.3792730137945037,
+            "hdi_high": 5.271677196389187,
+            "hdi_low": 0.00021143420988123233,
+            "interval_width": 5.2714657621793055,
+            "relative_error": -0.1453721636179679,
+            "true": 2.7839872661612337
+          }
+        },
+        "summary": {
+          "channels_covered": 4,
+          "channels_total": 5,
+          "coverage_rate": 0.8,
+          "hdi_prob": 0.89,
+          "mean_interval_width": 2.689729227004396,
+          "median_absolute_relative_error": 0.5081377215279961
+        }
+      },
+      "recovered_parameters": {
+        "display_prog": {
+          "adstock_params": {
+            "alpha": 0.21785425304242845
+          },
+          "saturation_params": {
+            "beta": 0.054820056064621425,
+            "lam": 1.8345684891660534
+          }
+        },
+        "search_brand": {
+          "adstock_params": {
+            "alpha": 0.22686802856041888
+          },
+          "saturation_params": {
+            "beta": 0.041363509424660515,
+            "lam": 1.8710150280832836
+          }
+        },
+        "search_nonbrand": {
+          "adstock_params": {
+            "alpha": 0.22307429987866084
+          },
+          "saturation_params": {
+            "beta": 0.029177054458859337,
+            "lam": 1.8461522199380367
+          }
+        },
+        "social_paid": {
+          "adstock_params": {
+            "alpha": 0.24690232313453456
+          },
+          "saturation_params": {
+            "beta": 0.02972172605683234,
+            "lam": 1.8853077167470906
+          }
+        },
+        "video_ctv": {
+          "adstock_params": {
+            "alpha": 0.33089187520724783
+          },
+          "saturation_params": {
+            "beta": 0.07084797437408871,
+            "lam": 2.037946379661954
+          }
+        }
+      },
+      "response_curve": {
+        "median_revenue": {
+          "display_prog": [
+            0.0,
+            25982.71479742435,
+            51701.92795806968,
+            76979.8230753704,
+            102284.93780020687,
+            126895.03855415806,
+            151377.55814564603,
+            174971.91314868582,
+            198085.79908855687,
+            220614.3616515869,
+            242883.11285400778,
+            265427.98761531606,
+            286826.6990335332,
+            308939.8836523269,
+            329916.48637733614,
+            350640.7377665924,
+            371022.36838971626,
+            390970.23446725286,
+            410106.71276911604,
+            428094.7787874987,
+            447318.07035393384
+          ],
+          "search_brand": [
+            0.0,
+            40296.65972063907,
+            80410.54278355988,
+            120313.78143645046,
+            159494.96684483465,
+            197924.20333104432,
+            235948.8021745201,
+            272955.3909440936,
+            308130.1523870332,
+            342416.9334340672,
+            375844.4380890456,
+            407964.34873105655,
+            440931.32814561855,
+            469297.9061252513,
+            501494.48598291684,
+            531656.4256512185,
+            560107.9059119137,
+            586175.7640814204,
+            614262.3480224786,
+            637468.7340383762,
+            666616.65716601
+          ],
+          "search_nonbrand": [
+            0.0,
+            31192.47504890361,
+            62192.593799798415,
+            92824.11240788671,
+            123111.70161652501,
+            152699.98123246268,
+            181266.70453550783,
+            208779.85477556186,
+            235674.86730327934,
+            261617.76227243873,
+            286283.46226554894,
+            310359.3550600035,
+            334665.38215044374,
+            354800.07818054117,
+            376132.02238476626,
+            396490.05707703554,
+            415724.3332233662,
+            434931.55260335293,
+            454561.27659058233,
+            471443.4322491477,
+            490100.2335242394
+          ],
+          "social_paid": [
+            0.0,
+            34855.93245796793,
+            69299.05227007781,
+            103157.09516778274,
+            136404.85912426823,
+            168832.19126078236,
+            201024.9924145021,
+            231073.20996731345,
+            261569.46539954425,
+            290749.2242820696,
+            318391.4153976694,
+            343706.6535542391,
+            369780.02473508124,
+            394801.55351988244,
+            418408.67564853653,
+            439238.6355300616,
+            460114.3702964301,
+            480313.03809998516,
+            500262.75869033067,
+            520344.93705369235,
+            538765.9446523497
+          ],
+          "video_ctv": [
+            0.0,
+            69854.83146028384,
+            139325.58829551528,
+            208349.74738934703,
+            275366.4767434816,
+            340223.49257393775,
+            404945.61936527235,
+            468020.6304416774,
+            529411.4553157425,
+            589548.6814951223,
+            644478.6198660592,
+            700173.0546121756,
+            752646.1189559663,
+            805026.0499992005,
+            851452.4147589959,
+            898759.6660850478,
+            945494.5436712657,
+            989276.3387681465,
+            1030544.3865367653,
+            1075151.104538634,
+            1115484.6470794666
+          ]
+        },
+        "multipliers": [
+          0.0,
+          0.1,
+          0.2,
+          0.3,
+          0.4,
+          0.5,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1.0,
+          1.1,
+          1.2,
+          1.3,
+          1.4,
+          1.5,
+          1.6,
+          1.7,
+          1.8,
+          1.9,
+          2.0
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "caveat": "SYNTHETIC — the channel-spend panel and every media effect in it are simulated from a pre-registered data-generating process, not measured. The revenue baseline is real Olist history; the media contribution layered on it is not. No figure here describes the effectiveness of any real marketing channel, and none may be quoted as one. What is measured is whether a method recovers a truth that is known only because it was constructed.",
+    "dgp_hash": "d9e7b488eb749462",
+    "seed": 20260829,
+    "source": "mmm",
+    "split": "full panel",
+    "synthetic": true
+  },
+  "truth_access": "Both fits were written to disk before the ground truth was read. athar.truth.load_truth refuses until the artifact it is asked to score exists, so no estimate here can have been informed by the answer."
+}

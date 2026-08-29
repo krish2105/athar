@@ -1,0 +1,370 @@
+{
+  "allocation": {
+    "allocations": {
+      "attribution_lastclick": {
+        "blended_roi_under_truth": 1.5312203228871988,
+        "revenue_under_truth": 3253843.186135297,
+        "shares": {
+          "display_prog": 0.05,
+          "search_brand": 0.4,
+          "search_nonbrand": 0.1,
+          "social_paid": 0.4,
+          "video_ctv": 0.05
+        },
+        "shortfall_against_best": 1692325.08778967,
+        "shortfall_share": 0.3421487086703477,
+        "spend": {
+          "display_prog": 106250.0,
+          "search_brand": 850000.0,
+          "search_nonbrand": 212500.0,
+          "social_paid": 850000.0,
+          "video_ctv": 106250.0
+        }
+      },
+      "equal_split": {
+        "blended_roi_under_truth": 2.0045415046810415,
+        "revenue_under_truth": 4259650.697447213,
+        "shares": {
+          "display_prog": 0.2,
+          "search_brand": 0.2,
+          "search_nonbrand": 0.2,
+          "social_paid": 0.2,
+          "video_ctv": 0.2
+        },
+        "shortfall_against_best": 686517.5764777539,
+        "shortfall_share": 0.13879786098198735,
+        "spend": {
+          "display_prog": 425000.0,
+          "search_brand": 425000.0,
+          "search_nonbrand": 425000.0,
+          "social_paid": 425000.0,
+          "video_ctv": 425000.0
+        }
+      },
+      "experiment": {
+        "blended_roi_under_truth": 1.7215169413288012,
+        "revenue_under_truth": 3658223.5003237026,
+        "shares": {
+          "display_prog": 0.05,
+          "search_brand": 0.4,
+          "search_nonbrand": 0.4,
+          "social_paid": 0.1,
+          "video_ctv": 0.05
+        },
+        "shortfall_against_best": 1287944.7736012647,
+        "shortfall_share": 0.2603924295077072,
+        "spend": {
+          "display_prog": 106250.0,
+          "search_brand": 850000.0,
+          "search_nonbrand": 850000.0,
+          "social_paid": 212500.0,
+          "video_ctv": 106250.0
+        }
+      },
+      "mmm_average_roi": {
+        "blended_roi_under_truth": 1.6445415549663511,
+        "revenue_under_truth": 3494650.804303496,
+        "shares": {
+          "display_prog": 0.1,
+          "search_brand": 0.4,
+          "search_nonbrand": 0.05,
+          "social_paid": 0.05,
+          "video_ctv": 0.4
+        },
+        "shortfall_against_best": 1451517.4696214711,
+        "shortfall_share": 0.29346301808483327,
+        "spend": {
+          "display_prog": 212500.0,
+          "search_brand": 850000.0,
+          "search_nonbrand": 106250.0,
+          "social_paid": 106250.0,
+          "video_ctv": 850000.0
+        }
+      },
+      "mmm_with_curvature": {
+        "blended_roi_under_truth": 1.626873086471187,
+        "revenue_under_truth": 3457105.308751272,
+        "shares": {
+          "display_prog": 0.21999997813643468,
+          "search_brand": 0.31999999999346745,
+          "search_nonbrand": 0.05,
+          "social_paid": 0.050000021870099776,
+          "video_ctv": 0.3599999999999981
+        },
+        "shortfall_against_best": 1489062.9651736952,
+        "shortfall_share": 0.3010538426328283,
+        "spend": {
+          "display_prog": 467499.9535399237,
+          "search_brand": 679999.9999861183,
+          "search_nonbrand": 106250.0,
+          "social_paid": 106250.04647396202,
+          "video_ctv": 764999.9999999959
+        }
+      },
+      "optimal_under_truth": {
+        "blended_roi_under_truth": 2.327608599494102,
+        "revenue_under_truth": 4946168.273924967,
+        "shares": {
+          "display_prog": 0.050000000001292205,
+          "search_brand": 0.08491291107796142,
+          "search_nonbrand": 0.3240720320135387,
+          "social_paid": 0.20338077807725227,
+          "video_ctv": 0.33763427882995556
+        },
+        "shortfall_against_best": 0.0,
+        "shortfall_share": 0.0,
+        "spend": {
+          "display_prog": 106250.00000274593,
+          "search_brand": 180439.93604066802,
+          "search_nonbrand": 688653.0680287697,
+          "social_paid": 432184.15341416106,
+          "video_ctv": 717472.8425136555
+        }
+      },
+      "true_average_roi": {
+        "blended_roi_under_truth": 2.263722064554634,
+        "revenue_under_truth": 4810409.387178597,
+        "shares": {
+          "display_prog": 0.05,
+          "search_brand": 0.05,
+          "search_nonbrand": 0.4,
+          "social_paid": 0.1,
+          "video_ctv": 0.4
+        },
+        "shortfall_against_best": 135758.88674637023,
+        "shortfall_share": 0.027447284287123643,
+        "spend": {
+          "display_prog": 106250.0,
+          "search_brand": 106250.0,
+          "search_nonbrand": 850000.0,
+          "social_paid": 212500.0,
+          "video_ctv": 850000.0
+        }
+      },
+      "true_marginal_roi": {
+        "blended_roi_under_truth": 2.263722064554634,
+        "revenue_under_truth": 4810409.387178597,
+        "shares": {
+          "display_prog": 0.05,
+          "search_brand": 0.05,
+          "search_nonbrand": 0.4,
+          "social_paid": 0.1,
+          "video_ctv": 0.4
+        },
+        "shortfall_against_best": 135758.88674637023,
+        "shortfall_share": 0.027447284287123643,
+        "spend": {
+          "display_prog": 106250.0,
+          "search_brand": 106250.0,
+          "search_nonbrand": 850000.0,
+          "social_paid": 212500.0,
+          "video_ctv": 850000.0
+        }
+      }
+    },
+    "allocations_that_failed": {},
+    "budget": 2125000.0,
+    "governance": {
+      "cap_share": 0.4,
+      "floor_share": 0.05,
+      "note": "Applied identically to every allocation. Without them a linear allocation puts the whole budget in one channel, and the comparison would be against a caricature no marketing organisation resembles."
+    },
+    "interpretation": "Every allocation is evaluated against the same true response curves, so what is compared is the consequence of believing each estimator rather than each estimator's opinion of itself. The shortfall is computed inside the simulation and is a statement about the methods, not about any real market."
+  },
+  "clv_consequence": {
+    "clv_over_first_order_value": null,
+    "consequence": "Lifetime value on this base is very nearly proportional to first-order value, so weighting the allocation by lifetime value and weighting it by immediate revenue rank the channels identically and produce the same budget. The CLV-weighted reallocation the brief invites is not a different answer here; it is the same answer with more steps, and saying so is the finding.",
+    "correlation_clv_with_first_order_value": null
+  },
+  "comparison": {
+    "channels": {
+      "display_prog": {
+        "attribution": {
+          "estimate": 1.972444782857144,
+          "interval": null,
+          "note": "no interval — an attribution report states a number, not a range",
+          "relative_error": 1.1916053142857153
+        },
+        "closest_method": "mmm",
+        "divergence": 0.30068124190810247,
+        "experiment": {
+          "covers_truth": null,
+          "estimate": 1.3079005213251422,
+          "interval": [
+            null,
+            null
+          ],
+          "relative_error": 0.45322280147238003
+        },
+        "mmm": {
+          "covers_truth": true,
+          "estimate": 1.1341358979509928,
+          "interval": [
+            6.143568470367485e-05,
+            2.4706305483957327
+          ],
+          "relative_error": 0.2601509977233252
+        },
+        "true_roi": 0.9000000000000001
+      },
+      "search_brand": {
+        "attribution": {
+          "estimate": 7.473195925000001,
+          "interval": null,
+          "note": "no interval — an attribution report states a number, not a range",
+          "relative_error": 3.6707474531249993
+        },
+        "closest_method": "mmm",
+        "divergence": 0.7376006017013134,
+        "experiment": {
+          "covers_truth": null,
+          "estimate": 3.2722256357888084,
+          "interval": [
+            null,
+            null
+          ],
+          "relative_error": 1.0451410223680049
+        },
+        "mmm": {
+          "covers_truth": true,
+          "estimate": 1.5858553693762256,
+          "interval": [
+            0.00023194372941152212,
+            3.543755626249288
+          ],
+          "relative_error": -0.008840394139859153
+        },
+        "true_roi": 1.6000000000000003
+      },
+      "search_nonbrand": {
+        "attribution": {
+          "estimate": 2.800000000000001,
+          "interval": null,
+          "note": "no interval — an attribution report states a number, not a range",
+          "relative_error": 0.0
+        },
+        "closest_method": "attribution",
+        "divergence": 0.6503852129712034,
+        "experiment": {
+          "covers_truth": null,
+          "estimate": 3.7336706014393384,
+          "interval": [
+            null,
+            null
+          ],
+          "relative_error": 0.33345378622833466
+        },
+        "mmm": {
+          "covers_truth": false,
+          "estimate": 0.6811493469665975,
+          "interval": [
+            1.063397910830084e-05,
+            1.491810947387909
+          ],
+          "relative_error": -0.7567323760833582
+        },
+        "true_roi": 2.800000000000001
+      },
+      "social_paid": {
+        "attribution": {
+          "estimate": 4.083247440000001,
+          "interval": null,
+          "note": "no interval — an attribution report states a number, not a range",
+          "relative_error": 0.9444035428571425
+        },
+        "closest_method": "experiment",
+        "divergence": 0.618199495382829,
+        "experiment": {
+          "covers_truth": null,
+          "estimate": 2.8511195916100385,
+          "interval": [
+            null,
+            null
+          ],
+          "relative_error": 0.3576759960047795
+        },
+        "mmm": {
+          "covers_truth": false,
+          "estimate": 0.887420897771203,
+          "interval": [
+            0.00033212840858104335,
+            1.9190416543543622
+          ],
+          "relative_error": -0.5774186201089511
+        },
+        "true_roi": 2.100000000000001
+      },
+      "video_ctv": {
+        "attribution": {
+          "estimate": 0.7990206200000001,
+          "interval": null,
+          "note": "no interval — an attribution report states a number, not a range",
+          "relative_error": -0.680391752
+        },
+        "closest_method": "mmm",
+        "divergence": 0.5486014270703252,
+        "experiment": {
+          "covers_truth": null,
+          "estimate": 1.8566683570493563,
+          "interval": [
+            null,
+            null
+          ],
+          "relative_error": -0.25733265718025744
+        },
+        "mmm": {
+          "covers_truth": true,
+          "estimate": 2.789024837213915,
+          "interval": [
+            0.00024506134057779815,
+            6.175326672711337
+          ],
+          "relative_error": 0.11560993488556592
+        },
+        "true_roi": 2.5
+      }
+    },
+    "summary": {
+      "closest_method_by_channel": {
+        "display_prog": "mmm",
+        "search_brand": "mmm",
+        "search_nonbrand": "attribution",
+        "social_paid": "experiment",
+        "video_ctv": "mmm"
+      },
+      "least_divergent_channel": "display_prog",
+      "most_divergent_channel": "search_brand",
+      "note": "Reconciliation is not averaging. Averaging a biased estimate with an unbiased one yields a biased estimate with a smaller variance, which is more dangerous to hand a decision-maker than either input because it looks more trustworthy than it is."
+    }
+  },
+  "headline": {
+    "attribution_revenue_brl": 3253843.186135297,
+    "best_possible_revenue_brl": 4946168.273924967,
+    "budget_brl": 2125000.0,
+    "cost_of_believing_attribution_brl": 1692325.08778967,
+    "cost_of_believing_attribution_share": 0.3421487086703477,
+    "statement": "On a budget of BRL 2,125,000, allocating from last-click attribution leaves BRL 1,692,325 (34.2%) of incremental revenue on the table against an allocation built from the true response curves. Computed inside the simulation; a statement about the methods, not about any real market."
+  },
+  "method_notes": {
+    "linear_versus_curved": "An experiment and an attribution report each return one number per channel and say nothing about what the next dirham earns, so a planner holding only those must treat returns as constant. Only the media-mix model offers curvature, and the difference between its curved allocation and its own linear one isolates what that curvature is worth.",
+    "why_not_average": "Reconciliation here is not averaging. Averaging a biased estimator with an unbiased one gives a biased estimator with a smaller variance, which is worse to hand a decision-maker than either input because it looks more trustworthy than it is."
+  },
+  "provenance": {
+    "caveat": "SYNTHETIC — the channel-spend panel and every media effect in it are simulated from a pre-registered data-generating process, not measured. The revenue baseline is real Olist history; the media contribution layered on it is not. No figure here describes the effectiveness of any real marketing channel, and none may be quoted as one. What is measured is whether a method recovers a truth that is known only because it was constructed.",
+    "dgp_hash": "d9e7b488eb749462",
+    "seed": 20260829,
+    "source": "triangulation",
+    "split": "full panel",
+    "synthetic": true
+  },
+  "scenario_in_aed": {
+    "assumed_brl_per_aed": 1.55,
+    "budget_aed": 1370967.7419354839,
+    "caveat": "SCENARIO — Olist trades in 2017-18 Brazilian reais. This project makes no claim about any exchange rate and no dirham figure here is a measurement. The conversion exists so a reader can hold the magnitudes at the scale the brief describes.",
+    "cost_of_believing_attribution_aed": 1091822.6372836581,
+    "on_a_one_million_aed_budget": {
+      "cost_of_believing_attribution_aed": 342148.7086703477,
+      "note": "The shortfall is a share of budget, so it scales. On AED 1,000,000 the same misallocation costs about AED 342,149 of incremental revenue."
+    }
+  }
+}

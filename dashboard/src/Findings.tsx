@@ -582,6 +582,23 @@ export function DecisionSection() {
     true_marginal_roi: "True marginal ROI",
   };
 
+  // The most uncomfortable number here, shown only when it actually holds.
+  const estimatorKeys = [
+    "attribution_lastclick",
+    "mmm_average_roi",
+    "mmm_with_curvature",
+    "experiment",
+  ].filter((key) => allocations[key]);
+  const ranked = estimatorKeys
+    .map((key) => [key, allocations[key]] as [string, any])
+    .sort((a, b) => a[1].shortfall_share - b[1].shortfall_share);
+  const bestEstimator = ranked[0] ?? ["", { shortfall_share: 0 }];
+  const worstEstimator = ranked[ranked.length - 1] ?? ["", { shortfall_share: 0 }];
+  const equalSplitWins =
+    !!allocations.equal_split &&
+    ranked.length > 0 &&
+    ranked.every(([, entry]) => allocations.equal_split.shortfall_share < entry.shortfall_share);
+
   const surface = allocator.surface;
   // The truth marker takes ink; the estimators take the categorical slots in fixed
   // order. Counted separately from the loop index so the palette is never cycled —
@@ -782,9 +799,42 @@ export function DecisionSection() {
         </Reveal>
 
         <Reveal>
-          <p style={{ marginTop: "2.4rem", maxWidth: "70ch", color: "var(--ink-2)" }}>
-            {headline.statement}
-          </p>
+          <div style={{ marginTop: "2.4rem", maxWidth: "72ch" }}>
+            <p style={{ color: "var(--ink-2)" }}>{headline.statement}</p>
+            {equalSplitWins && (
+              <>
+                <h3 style={{ marginTop: "2rem" }}>
+                  And an equal split beats all three of them
+                </h3>
+                <p>
+                  Dividing the budget evenly across the five channels, using no estimate at
+                  all, forgoes{" "}
+                  <span className="num">{pct(allocations.equal_split.shortfall_share, 1)}</span>{" "}
+                  — against{" "}
+                  <span className="num">{pct(bestEstimator[1].shortfall_share, 1)}</span> for
+                  the best estimator here and{" "}
+                  <span className="num">{pct(worstEstimator[1].shortfall_share, 1)}</span> for
+                  the worst.
+                </p>
+                <p>
+                  This is not an argument for allocating blindly, and it is not a quirk of
+                  the arithmetic. It is what a linear allocation rule does to a biased
+                  estimate. A scalar ROI table forces a corner solution — the best-ranked
+                  channel to its ceiling, the worst to its floor — so the budget concentrates
+                  exactly where the estimate is most wrong. Last-click drives brand search to
+                  its cap, the channel it over-credits most, and video to its floor, the one
+                  it understates most. Each estimator is confidently wrong in one large
+                  place; the even split is never badly wrong anywhere.
+                </p>
+                <p style={{ borderLeft: "2px solid var(--signal)", paddingLeft: "1rem" }}>
+                  A ranking is worth acting on only in proportion to how much better it is
+                  than not knowing. A planner holding a biased table should shrink toward the
+                  even split rather than optimise against it — a stronger conclusion than the
+                  headline, and one that cuts against this project's own instrument.
+                </p>
+              </>
+            )}
+          </div>
         </Reveal>
       </div>
     </section>

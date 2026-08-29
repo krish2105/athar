@@ -676,6 +676,47 @@ def triangulation_report():
             allocation["allocations"].items(), key=lambda kv: kv[1]["shortfall_share"]
         )
     )
+    # The most uncomfortable number in the project, stated only if it holds: an
+    # equal split that ignores every estimate beating the estimates themselves.
+    entries = allocation["allocations"]
+    equal = entries.get("equal_split")
+    estimators = {
+        name: entries[name]
+        for name in ("attribution_lastclick", "mmm_average_roi", "mmm_with_curvature", "experiment")
+        if name in entries
+    }
+    hedge = ""
+    if (
+        equal
+        and estimators
+        and all(equal["shortfall_share"] < e["shortfall_share"] for e in estimators.values())
+    ):
+        worst = max(estimators.items(), key=lambda kv: kv[1]["shortfall_share"])
+        best = min(estimators.items(), key=lambda kv: kv[1]["shortfall_share"])
+        hedge = (
+            f"**And an equal split beats all three of them.** Dividing the budget evenly "
+            f"across the five channels, using no estimate at all, forgoes "
+            f"{equal['shortfall_share']:.1%} — against {best[1]['shortfall_share']:.1%} for "
+            f"the best estimator here ({best[0].replace('_', ' ')}) and "
+            f"{worst[1]['shortfall_share']:.1%} for the worst "
+            f"({worst[0].replace('_', ' ')}).\n\n"
+            f"This is not an argument for allocating blindly, and it is not a quirk of the "
+            f"arithmetic. It is what a linear allocation rule does to a biased estimate. A "
+            f"scalar ROI table forces a corner solution — the best-ranked channel to its "
+            f"ceiling, the worst to its floor — so the budget is concentrated exactly where "
+            f"the estimate is most wrong. Last-click drives brand search to its 40% cap, "
+            f"the one channel it over-credits most, and video to its 5% floor, the one it "
+            f"understates most. The media-mix model makes the opposite mistake, starving "
+            f"non-brand search because it split that channel's credit with paid social. "
+            f"Each estimator is confidently wrong in one large place; the even split is "
+            f"never badly wrong anywhere.\n\n"
+            f"The practical reading is that a ranking is worth acting on only in proportion "
+            f"to how much better it is than not knowing, and that a planner holding a "
+            f"biased table should shrink toward the even split rather than optimise "
+            f"against it. That is a stronger conclusion than the headline above and it "
+            f"cuts against the project's own instrument, which is why it is here."
+        )
+
     clv_note = triangulation.get("clv_consequence")
     clv_section = (
         f"\n## The lifetime-value consequence\n\n{clv_note['consequence']}\n" if clv_note else ""
@@ -707,6 +748,8 @@ Least divergent: **{label(comparison["summary"]["least_divergent_channel"])}**.
 ## The answer
 
 {headline["statement"]}
+
+{hedge}
 
 {triangulation["scenario_in_aed"]["caveat"]}
 
