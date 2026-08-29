@@ -74,6 +74,16 @@ def main():
             n_estimators=200, learning_rate=0.05, num_leaves=31, verbose=-1, random_state=SEED
         )
 
+    # The propensity is known by design. Criteo randomised at a fixed rate, so the
+    # probability of treatment is a constant of the experiment rather than
+    # something to be recovered from twelve anonymised features. causalml will
+    # estimate it if it is not supplied, and on five million rows that took
+    # thirty-four minutes of CPU to reconstruct a number the design already fixes
+    # — and reconstructing it adds estimation noise to an otherwise exact quantity.
+    propensity = float(treatment_train.mean())
+    log.info("supplying the known propensity %.4f rather than estimating it", propensity)
+    propensity_train = np.full(len(treatment_train), propensity)
+
     scores: dict[str, np.ndarray] = {}
 
     for name, builder in (
@@ -87,7 +97,9 @@ def main():
         log.info("fitting %s", name)
         try:
             model = builder()
-            model.fit(X=features_train, treatment=treatment_train, y=outcome_train)
+            model.fit(
+                X=features_train, treatment=treatment_train, y=outcome_train, p=propensity_train
+            )
             predicted = model.predict(X=features_test)
             scores[name] = np.asarray(predicted).ravel()[: len(features_test)]
         except Exception as error:  # noqa: BLE001 - a failed learner is recorded, not hidden
@@ -160,6 +172,12 @@ def main():
             "causal_forest_train_rows": forest_rows,
         },
         "evaluation": {
+            "propensity": (
+                f"Supplied as the known design constant {propensity:.4f}, not estimated. "
+                f"Criteo randomised at a fixed rate, so the probability of treatment is a "
+                f"property of the experiment; recovering it from the features would add "
+                f"estimation noise to an exact quantity."
+            ),
             "metric": "Qini coefficient (spine.metrics.qini_auc)",
             "why": (
                 "Qini subtracts the random-targeting line, so it scores only what the "
