@@ -22,7 +22,20 @@ the coverage rates, with the exclusion counted in the output. A recovery study t
 quietly averages in non-converged fits is measuring its own sampler.
 
 Resumable. Each cell is cached under a hash of its configuration, so an interrupted
-run costs one fit rather than the batch. Re-running adds nothing.
+run costs one fit rather than the batch.
+
+A note on the truth quarantine, because this script does not use it. `athar.truth`
+guards the *stored* ground truth behind a lock that will not open until the fit
+being scored exists on disk, and every notebook and build script goes through it.
+The grid cannot: it generates a fresh panel per cell, and a generated panel
+necessarily carries its own truth in memory — there is no file to lock.
+
+What protects this script is ordering, and it is worth being explicit that
+ordering is all it is. `run_cell` generates the panel, fits the model, and only
+then reads `panel.truth` to score it. Nothing about the truth reaches the model:
+the frame handed to `mmm.fit` is `panel.frame()`, which carries week, spend and
+revenue and is tested in `tests/test_dgp.py` to expose nothing else. An examiner
+is right to ask why the lock is absent here, and this is the answer. Re-running adds nothing.
 
 Run: `make recovery`
 """
