@@ -21,3 +21,4 @@ data/
 dashboard/node_modules/
 dashboard/.vite/
 dashboard/dist/
+dashboard/tsconfig.tsbuildinfo

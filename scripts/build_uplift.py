@@ -25,7 +25,17 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("build_uplift")
 
-SAMPLE_ROWS = 6_000_000
+#: Rows drawn from the 13,979,592 available. The binding constraint on a Qini
+#: interval is not the row count but the number of control-arm converters behind
+#: it: the control arm is 15% of the sample and converts at 0.19%, so ten million
+#: rows leave roughly 1,450 of them in the held-out half. That count is reported
+#: with every result so precision claims follow it rather than the row count.
+SAMPLE_ROWS = 10_000_000
+
+#: Bootstrap resamples per model. Each one re-sorts five million rows, so this is
+#: the cost driver; sixty is enough to place a 95% interval at the precision the
+#: converter count supports, and more would be false comfort.
+BOOTSTRAP_REPLICATES = 60
 SEED = 20260829
 
 
@@ -46,10 +56,21 @@ def main():
     outcome_test = test["conversion"].to_numpy()
 
     from causalml.inference.meta import BaseSClassifier, BaseTClassifier, BaseXClassifier
-    from lightgbm import LGBMClassifier
+    from lightgbm import LGBMClassifier, LGBMRegressor
 
     def learner():
         return LGBMClassifier(
+            n_estimators=200, learning_rate=0.05, num_leaves=31, verbose=-1, random_state=SEED
+        )
+
+    def effect_learner():
+        """The X-learner's second stage regresses an imputed treatment effect.
+
+        It needs a regressor, not a classifier: the target is a continuous
+        pseudo-outcome rather than a class. Passing None — which reads as "use the
+        default" — raises instead.
+        """
+        return LGBMRegressor(
             n_estimators=200, learning_rate=0.05, num_leaves=31, verbose=-1, random_state=SEED
         )
 
@@ -58,7 +79,10 @@ def main():
     for name, builder in (
         ("s_learner", lambda: BaseSClassifier(learner=learner())),
         ("t_learner", lambda: BaseTClassifier(learner=learner())),
-        ("x_learner", lambda: BaseXClassifier(outcome_learner=learner(), effect_learner=None)),
+        (
+            "x_learner",
+            lambda: BaseXClassifier(outcome_learner=learner(), effect_learner=effect_learner()),
+        ),
     ):
         log.info("fitting %s", name)
         try:
@@ -94,7 +118,9 @@ def main():
     results = {}
     for name, score in scores.items():
         log.info("scoring %s", name)
-        qini = uplift.bootstrap_qini(outcome_test, treatment_test, score, seed=SEED)
+        qini = uplift.bootstrap_qini(
+            outcome_test, treatment_test, score, replicates=BOOTSTRAP_REPLICATES, seed=SEED
+        )
         results[name] = {
             **qini,
             "targeting_curve": uplift.targeting_curve(outcome_test, treatment_test, score),
@@ -140,7 +166,7 @@ def main():
                 "ranking contributed. A model with no uplift signal scores zero however "
                 "large the average treatment effect happens to be."
             ),
-            "interval": "95% bootstrap over the test half, 100 replicates",
+            "interval": f"95% bootstrap over the test half, {BOOTSTRAP_REPLICATES} replicates",
             "split": (
                 "Random. Criteo carries no time column; it is a randomised cross-section "
                 "and is split as one. spine.splitting is deliberately unused here and "

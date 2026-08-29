@@ -26,6 +26,21 @@ HEADER = (
 )
 
 
+#: Readable names for the channels. The keys are what the configuration and the
+#: artifacts use; these are what a reader should see.
+LABELS = {
+    "search_brand": "Brand search",
+    "search_nonbrand": "Non-brand search",
+    "social_paid": "Paid social",
+    "display_prog": "Programmatic display",
+    "video_ctv": "Video / CTV",
+}
+
+
+def label(channel):
+    return LABELS.get(channel, channel)
+
+
 def load(name):
     path = paths.metrics_dir() / f"{name}.json"
     return json.loads(path.read_text()) if path.exists() else None
@@ -130,7 +145,7 @@ def panel_report():
     design, ident = panel["design"], panel["identification"]
     channels = panel["channels"]
     rows = "\n".join(
-        f"| {c['channel']} | {c['mean_weekly_spend']:,.0f} | {c['true_roi_average']:.2f} | "
+        f"| {label(c['channel'])} | {c['mean_weekly_spend']:,.0f} | {c['true_roi_average']:.2f} | "
         f"{c['true_roi_marginal']:.2f} | {c['marginal_over_average']:.2f} | "
         f"{c['adstock_theta']:.0f} | {c['lastclick_roas']:.2f} | "
         f"{c['lastclick_bias_relative']:+.1%} |"
@@ -197,8 +212,8 @@ which is what makes the matched arm genuinely matched rather than merely close.
 
 {panel["attribution_summary"]["null_case"]}
 
-Most overstated: **{panel["attribution_summary"]["most_overstated"]}**.
-Most understated: **{panel["attribution_summary"]["most_understated"]}**.
+Most overstated: **{label(panel["attribution_summary"]["most_overstated"])}**.
+Most understated: **{label(panel["attribution_summary"]["most_understated"])}**.
 """
 
 
@@ -315,7 +330,7 @@ def recovery_report():
             summary = fit["average_roi"]["summary"]
             diagnostics = fit["diagnostics"]
             rows = "\n".join(
-                f"| {channel} | {entry['true']:.2f} | {entry['estimated_mean']:.2f} | "
+                f"| {label(channel)} | {entry['true']:.2f} | {entry['estimated_mean']:.2f} | "
                 f"{entry['hdi_low']:.2f} – {entry['hdi_high']:.2f} | "
                 f"{'yes' if entry['covered'] else '**no**'} | {entry['relative_error']:+.1%} |"
                 for channel, entry in fit["average_roi"]["channels"].items()
@@ -400,7 +415,7 @@ def experiments_report():
             f"{row['detected']:.0%} |"
             for row in curve
         )
-        blocks.append(f"""### {channel}
+        blocks.append(f"""### {label(channel)}
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
@@ -524,7 +539,7 @@ def triangulation_report():
         return f"{estimate:.2f}" if estimate is not None else "not run"
 
     rows = "\n".join(
-        f"| {channel} | {entry['true_roi']:.2f} | "
+        f"| {label(channel)} | {entry['true_roi']:.2f} | "
         f"{entry['attribution']['estimate']:.2f} | "
         f"{entry['mmm']['estimate']:.2f} | "
         f"{experiment_cell(entry)} | "
@@ -551,8 +566,8 @@ def triangulation_report():
 |---|---:|---:|---:|---:|---:|---|
 {rows}
 
-Most divergent: **{comparison["summary"]["most_divergent_channel"]}**.
-Least divergent: **{comparison["summary"]["least_divergent_channel"]}**.
+Most divergent: **{label(comparison["summary"]["most_divergent_channel"])}**.
+Least divergent: **{label(comparison["summary"]["least_divergent_channel"])}**.
 
 {comparison["summary"]["note"]}
 

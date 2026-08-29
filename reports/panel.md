@@ -24,11 +24,11 @@ blended true ROI of 2.12.
 
 | Channel | Weekly spend | True avg ROI | True marginal | Marginal/avg | Adstock peak (wks) | Last-click ROAS | Error |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| search_brand | 4,000 | 1.60 | 0.96 | 0.60 | 0 | 7.47 | +367.1% |
-| search_nonbrand | 7,000 | 2.80 | 1.90 | 0.68 | 0 | 2.80 | +0.0% |
-| social_paid | 6,000 | 2.10 | 1.48 | 0.71 | 1 | 4.08 | +94.4% |
-| display_prog | 3,500 | 0.90 | 0.58 | 0.64 | 2 | 1.97 | +119.2% |
-| video_ctv | 4,500 | 2.50 | 2.78 | 1.11 | 3 | 0.80 | -68.0% |
+| Brand search | 4,000 | 1.60 | 0.96 | 0.60 | 0 | 7.47 | +367.1% |
+| Non-brand search | 7,000 | 2.80 | 1.90 | 0.68 | 0 | 2.80 | +0.0% |
+| Paid social | 6,000 | 2.10 | 1.48 | 0.71 | 1 | 4.08 | +94.4% |
+| Programmatic display | 3,500 | 0.90 | 0.58 | 0.64 | 2 | 1.97 | +119.2% |
+| Video / CTV | 4,500 | 2.50 | 2.78 | 1.11 | 3 | 0.80 | -68.0% |
 
 **Average ROI is not marginal ROI, and which is larger is not fixed.** A Hill curve
 with a slope above one is S-shaped: below its inflection the response is convex,
@@ -68,5 +68,5 @@ Last-click here is a parametric caricature, not a simulated journey: tracking_ra
 
 search_nonbrand carries tracking_rate 1.0 and organic_capture 0.0, so last-click recovers its true ROI exactly. A harness that only ever showed attribution failing would have had its answer chosen for it.
 
-Most overstated: **search_brand**.
-Most understated: **video_ctv**.
+Most overstated: **Brand search**.
+Most understated: **Video / CTV**.

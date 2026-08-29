@@ -24,7 +24,7 @@ Media contribution is allocated across states in proportion to each state's shar
 
 ## Results
 
-### display_prog
+### Programmatic display
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
@@ -32,7 +32,7 @@ Media contribution is allocated across states in proportion to each state's shar
 | 5 | 15.7% | +0.431 | 1.40 | 20% |
 | 8 | 24.8% | +0.133 | 1.07 | 33% |
 | 13 | 45.8% | -0.042 | 1.15 | 40% |
-### search_brand
+### Brand search
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
@@ -40,7 +40,7 @@ Media contribution is allocated across states in proportion to each state's shar
 | 5 | 15.7% | +0.198 | 0.64 | 53% |
 | 8 | 24.8% | +0.062 | 0.49 | 63% |
 | 13 | 45.8% | -0.019 | 0.53 | 70% |
-### search_nonbrand
+### Non-brand search
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
@@ -48,7 +48,7 @@ Media contribution is allocated across states in proportion to each state's shar
 | 5 | 15.7% | +0.116 | 0.38 | 78% |
 | 8 | 24.8% | +0.036 | 0.29 | 90% |
 | 13 | 45.8% | -0.011 | 0.31 | 87% |
-### social_paid
+### Paid social
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
@@ -56,7 +56,7 @@ Media contribution is allocated across states in proportion to each state's shar
 | 5 | 15.7% | +0.189 | 0.61 | 58% |
 | 8 | 24.8% | +0.059 | 0.47 | 65% |
 | 13 | 45.8% | -0.018 | 0.50 | 72% |
-### video_ctv
+### Video / CTV
 
 | Treated states | Revenue switched off | Median error | Error SD | Detected |
 |---|---:|---:|---:|---:|
