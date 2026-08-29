@@ -240,6 +240,43 @@ export function RecoverySection() {
                     0.89.
                   </>
                 }
+                table={
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Cell</th>
+                        <th>Converged</th>
+                        <th>Coverage</th>
+                        <th>Median abs rel error</th>
+                        <th>Mean interval width</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(heat.recovery.slices).map(([name, slice]: [string, any]) => {
+                        const block = slice.average_roi;
+                        return (
+                          <tr key={name}>
+                            <td>{name.replace(/_/g, " ")}</td>
+                            <td className="num">
+                              {block.converged ?? 0}/{block.fits ?? 0}
+                            </td>
+                            <td className="num">
+                              {block.converged ? block.coverage_rate.toFixed(2) : "—"}
+                            </td>
+                            <td className="num">
+                              {block.converged
+                                ? block.median_absolute_relative_error.toFixed(2)
+                                : "—"}
+                            </td>
+                            <td className="num">
+                              {block.converged ? block.mean_interval_width.toFixed(2) : "—"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                }
               >
                 <Heatmap
                   rows={heat.rowLabels}
@@ -248,6 +285,16 @@ export function RecoverySection() {
                   format={(v) => v.toFixed(2)}
                   caption="Coverage of the 89% interval by panel length, collinearity and specification"
                 />
+                <p
+                  className="footnote"
+                  style={{ marginTop: "1rem", borderLeft: "2px solid var(--signal)", paddingLeft: "1rem" }}
+                >
+                  <strong>Coverage alone is not enough.</strong> An interval reaches perfect
+                  coverage by being uselessly wide. Switch to the table to see the median
+                  error and the interval width beside it — a cell at 1.00 coverage with a
+                  median error above 1.0 has not recovered anything, it has declined to
+                  answer.
+                </p>
               </Figure>
             </div>
           </Reveal>
