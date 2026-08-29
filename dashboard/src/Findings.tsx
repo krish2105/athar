@@ -188,17 +188,23 @@ export function FindableSection() {
             }
           >
             <Intervals
-              rows={Object.entries(models).map(([name, r]: [string, any]) => ({
-                key: name,
-                label: name.replace(/_/g, " "),
-                low: r.ci_low,
-                high: r.ci_high,
-                mean: r.qini,
-                truth: 0,
-                covered: !r.beats_random,
-              }))}
+              rows={Object.entries(models)
+                .sort((a, b) => b[1].qini - a[1].qini)
+                .map(([name, r]: [string, any]) => ({
+                  key: name,
+                  label: name.replace(/_/g, " "),
+                  low: r.ci_low,
+                  high: r.ci_high,
+                  mean: r.qini,
+                  truth: 0,
+                  covered: r.beats_random,
+                }))}
               color="var(--experiment)"
               format={(v) => v.toFixed(0)}
+              estimateLabel="Qini, 95% bootstrap interval"
+              referenceLabel="random targeting"
+              missLabel="does not beat random"
+              showReferenceValue={false}
             />
           </Figure>
         </Reveal>

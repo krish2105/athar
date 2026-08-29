@@ -128,27 +128,50 @@ export function Intervals({
   rows,
   color,
   format,
+  estimateLabel = "estimated ROI, 89% interval",
+  referenceLabel = "true ROI",
+  missLabel = "missed",
+  showReferenceValue = true,
 }: {
-  rows: { key: string; label: string; low: number; high: number; mean: number; truth: number; covered: boolean }[];
+  rows: {
+    key: string;
+    label: string;
+    low: number;
+    high: number;
+    mean: number;
+    truth: number;
+    covered: boolean;
+  }[];
   color: string;
   format: (value: number) => string;
+  /** Labels are parameters because this chart is used twice with different
+   *  meanings: ROI against a known truth, and a Qini coefficient against the
+   *  zero line that random targeting sits on. Leaving the ROI wording in place
+   *  on the second one would have mislabelled it. */
+  estimateLabel?: string;
+  referenceLabel?: string;
+  missLabel?: string;
+  showReferenceValue?: boolean;
 }) {
   const { setTip, node } = useTooltip();
   const width = 720;
   const rowHeight = 54;
   const padding = { top: 26, right: 30, bottom: 34, left: 168 };
   const height = padding.top + rows.length * rowHeight + padding.bottom;
+  const lo = Math.min(0, ...rows.flatMap((r) => [r.low, r.truth]));
   const hi = Math.max(...rows.flatMap((r) => [r.high, r.truth])) * 1.08;
-  const x = (v: number) => padding.left + (v / hi) * (width - padding.left - padding.right);
+  const x = (v: number) =>
+    padding.left + ((v - lo) / (hi - lo)) * (width - padding.left - padding.right);
 
   return (
     <div style={{ position: "relative" }}>
       <div className="legend">
         <span style={{ color }}>
-          <i /> <span style={{ color: INK2 }}>estimated ROI, 89% interval</span>
+          <i /> <span style={{ color: INK2 }}>{estimateLabel}</span>
         </span>
         <span style={{ color: "var(--truth)" }}>
-          <i style={{ width: 2, height: 12 }} /> <span style={{ color: INK2 }}>true ROI</span>
+          <i style={{ width: 2, height: 12 }} />{" "}
+          <span style={{ color: INK2 }}>{referenceLabel}</span>
         </span>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img"
@@ -164,10 +187,10 @@ export function Intervals({
                    content: (
                      <>
                        <strong>{row.label}</strong><br />
-                       true <span className="num">{format(row.truth)}</span><br />
+                       {referenceLabel} <span className="num">{format(row.truth)}</span><br />
                        estimate <span className="num">{format(row.mean)}</span><br />
                        interval <span className="num">{format(row.low)}–{format(row.high)}</span><br />
-                       {row.covered ? "covers the truth" : "misses the truth"}
+                       {row.covered ? "" : missLabel}
                      </>
                    ),
                  });
@@ -182,11 +205,13 @@ export function Intervals({
               <circle cx={x(row.mean)} cy={y} r={5} fill={color} stroke={SURFACE} strokeWidth={2} />
               <line x1={x(row.truth)} x2={x(row.truth)} y1={y - 15} y2={y + 15}
                     stroke="var(--truth)" strokeWidth={2} strokeLinecap="round" />
-              <text x={x(row.truth)} y={y - 20} fill={INK3} fontSize={10.5} textAnchor="middle"
-                    className="num">{format(row.truth)}</text>
+              {showReferenceValue && (
+                <text x={x(row.truth)} y={y - 20} fill={INK3} fontSize={10.5}
+                      textAnchor="middle" className="num">{format(row.truth)}</text>
+              )}
               {!row.covered && (
                 <text x={width - padding.right} y={y + 4} fill="var(--signal)" fontSize={11}
-                      textAnchor="end">missed</text>
+                      textAnchor="end">{missLabel}</text>
               )}
             </g>
           );
