@@ -54,13 +54,26 @@ describes the effectiveness of a real marketing channel.
 
 ## Negative results, reported as results
 
-- **BG/NBD does not converge on Olist by maximum likelihood** — at any time scale,
-  at any penalty from 0 to 10, on the full base or on the repeaters alone. Not a
-  tuning problem: its dropout parameters are identified only by the pattern of
-  repeat purchasing, and with a 3.03% repeat rate and repeaters averaging 1.11
-  repeats there is no pattern to identify them from. The Bayesian fit converges
-  because its priors supply what the data cannot, which is the prior doing the
-  work rather than the model being better.
+- **Fitting the *right* functional form made recovery worse.** Across forty
+  full-posterior fits, the matched arm — the one handed the shape that generated
+  the data — reaches higher coverage (1.00 against 0.60) and is ten times further
+  from the truth, with intervals six times wider and only 6 of 20 runs passing
+  their sampler diagnostics against 15 of 20. It has more parameters to identify
+  from the same weak signal, so it covers the truth by being unable to exclude
+  anything. This is the project's clearest argument against reading coverage on
+  its own.
+- **More data made coverage worse.** For the misspecified model at high
+  collinearity, going from 85 to 156 weeks moved coverage from 0.90 to 0.40 while
+  the intervals narrowed. A misspecified model given more evidence becomes more
+  confident about the wrong value.
+- **BG/NBD cannot be fitted to Olist at all.** Maximum likelihood does not
+  converge at any time scale or penalty, on the full base or on the repeaters
+  alone. The MCMC fit runs but throws 3,507 divergences with `alpha` collapsing
+  to 1.6e-306, and on a time-based holdout it predicts 43.6 repeat purchases
+  against 557 actual — losing to a baseline that predicts zero. Its dropout
+  parameters are identified only by the pattern of repeat purchasing, and with a
+  3.03% repeat rate and repeaters averaging 1.11 repeats there is no pattern to
+  identify them from.
 - **Customer lifetime value is very nearly proportional to first-order value**, so
   a CLV-weighted reallocation and a revenue-weighted one produce the same budget.
   The story the brief invites cannot honestly be told on this data.
