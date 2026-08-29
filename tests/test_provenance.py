@@ -158,3 +158,39 @@ def test_something_genuinely_unserialisable_is_refused(tmp_path):
             Provenance(source="criteo", synthetic=False),
             tmp_path,
         )
+
+
+def test_a_nan_cannot_reach_an_artifact(tmp_path):
+    """A NaN is a computation that failed, and it must not look like a value.
+
+    Python writes it as a bare `NaN` token, which is not valid JSON — every other
+    reader rejects the file, and the dashboard build is where that surfaced. The
+    deeper problem is that a report would otherwise quote it as a number.
+    """
+    with pytest.raises(ProvenanceError, match="non-finite"):
+        write_metric(
+            "broken",
+            {"ratio": float("nan")},
+            Provenance(source="olist", synthetic=False, split="full"),
+            tmp_path,
+        )
+    with pytest.raises(ProvenanceError, match="non-finite"):
+        write_metric(
+            "broken",
+            {"ratio": float("inf")},
+            Provenance(source="olist", synthetic=False, split="full"),
+            tmp_path,
+        )
+
+
+def test_every_committed_artifact_is_valid_json_for_other_readers():
+    """The Python that wrote these is not the only thing that reads them.
+
+    The dashboard imports them through a JavaScript bundler, which is stricter
+    than Python's json module about exactly the tokens Python is happy to emit.
+    """
+    for path in sorted(paths.metrics_dir().glob("*.json")):
+        text = path.read_text()
+        for token in ("NaN", "Infinity", "-Infinity"):
+            assert f": {token}" not in text, f"{path.name} contains a bare {token}"
+        json.loads(text)

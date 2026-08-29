@@ -288,7 +288,9 @@ def write_metric(name: str, payload: Any, provenance: Provenance, directory: Pat
     ------
     ProvenanceError
         If ``payload`` already carries a ``provenance`` key, which would let a
-        caller smuggle in a block that bypassed validation.
+        caller smuggle in a block that bypassed validation; or if it contains a
+        non-finite value, which is both invalid JSON and a computation that
+        failed without saying so.
 
     Examples
     --------
@@ -313,9 +315,25 @@ def write_metric(name: str, payload: Any, provenance: Provenance, directory: Pat
     directory.mkdir(parents=True, exist_ok=True)
     document = {**payload, "provenance": provenance.to_dict()}
     path = directory / f"{name}.json"
-    path.write_text(
-        json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False, default=_plain) + "\n"
-    )
+    try:
+        rendered = json.dumps(
+            document,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=_plain,
+            allow_nan=False,
+        )
+    except ValueError as error:
+        raise ProvenanceError(
+            f"{name}.json contains a non-finite value ({error}). Python writes NaN and "
+            f"Infinity as bare tokens, which are not valid JSON and which every other "
+            f"reader rejects — the dashboard build is where this surfaced. More to the "
+            f"point, a NaN in a metrics artifact is a number that failed to compute, and "
+            f"it belongs in the report as an explained absence rather than as a token "
+            f"that looks like a value. Replace it with null and say why."
+        ) from error
+    path.write_text(rendered + "\n")
     return path
 
 

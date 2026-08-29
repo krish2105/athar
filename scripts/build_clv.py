@@ -173,6 +173,18 @@ def main():
     lifetime_value = predicted_purchases * expected_value
     first_order = summary["first_order_value"].to_numpy()
 
+    # The degenerate posterior propagates. With alpha at roughly 1e-306 the
+    # expected-purchases calculation divides by a denormal and returns NaN for
+    # every customer. That is the honest downstream consequence of a fit that did
+    # not work, and it is recorded as an explained absence rather than as a number
+    # — athar.provenance refuses to write NaN into an artifact at all, precisely so
+    # that a failed computation cannot reach a report looking like a value.
+    predictions_usable = bool(np.isfinite(predicted_purchases).all())
+    value_usable = predictions_usable and bool(np.isfinite(lifetime_value).all())
+
+    def finite(value):
+        return float(value) if np.isfinite(value) else None
+
     payload = {
         "repeat_behaviour": behaviour,
         "maximum_likelihood": {
@@ -237,14 +249,28 @@ def main():
         },
         "lifetime_value": {
             "horizon_weeks": 52.0,
-            "mean_predicted_purchases": float(predicted_purchases.mean()),
-            "median_predicted_purchases": float(np.median(predicted_purchases)),
-            "share_predicted_below_0_1_purchases": float((predicted_purchases < 0.1).mean()),
-            "mean_expected_clv_brl": float(lifetime_value.mean()),
+            "computable": value_usable,
+            "why_not": (
+                None
+                if value_usable
+                else (
+                    "The BG/NBD posterior is degenerate — alpha sits at roughly 1e-306 — "
+                    "so the expected-purchases calculation divides by a denormal and "
+                    "returns NaN for every customer. There is no lifetime value to report "
+                    "because there is no working transaction model to compute it from. "
+                    "That is the finding, not a gap in it."
+                )
+            ),
+            "mean_predicted_purchases": finite(predicted_purchases.mean()),
+            "median_predicted_purchases": finite(np.median(predicted_purchases)),
+            "share_predicted_below_0_1_purchases": finite((predicted_purchases < 0.1).mean())
+            if predictions_usable
+            else None,
+            "mean_expected_clv_brl": finite(lifetime_value.mean()),
             "mean_first_order_value_brl": float(first_order.mean()),
-            "clv_over_first_order_value": float(lifetime_value.mean() / first_order.mean()),
-            "correlation_clv_with_first_order_value": float(
-                np.corrcoef(lifetime_value, first_order)[0, 1]
+            "clv_over_first_order_value": finite(lifetime_value.mean() / first_order.mean()),
+            "correlation_clv_with_first_order_value": (
+                finite(np.corrcoef(lifetime_value, first_order)[0, 1]) if value_usable else None
             ),
         },
         "verdict": (
