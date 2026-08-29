@@ -138,6 +138,22 @@ rather than quietly dropped.
 caches each cell under a hash of its configuration, so an interruption costs one
 fit rather than the batch.
 
+## Where the page is published
+
+`docs/` is the built dashboard and is committed, so it is served without a build
+step. GitHub Pages publishes it at
+[krish2105.github.io/athar](https://krish2105.github.io/athar/) via
+`.github/workflows/pages.yml`.
+
+`vercel.json` is present so the same page can be deployed to Vercel with no
+configuration — it builds from the repository root, because the dashboard imports
+`metrics/*.json` from outside its own directory and Vite writes to `docs/` rather
+than the default `dist/`. Nothing about the page needs a server: there are no
+runtime fetches, and every number is baked in at build time.
+
+Two hosts for one static page is redundant. Vercel is worth it only for preview
+deployments on pull requests; Pages is enough otherwise.
+
 ## Layout
 
 ```
