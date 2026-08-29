@@ -29,6 +29,12 @@ An academic demonstration, for MAIB AI 208, that platform-reported return is not
 | --- | --- | --- |
 | Intent-to-treat lift (Criteo) | 0.00115187 | full population, 13,979,592 rows, no sampling |
 | Platform-reported over incremental conversions | 1.6827 | full population, 13,979,592 rows, no sampling |
+| Average-ROI coverage, matched fit | 1.0 | headline panel, 85 weeks, real Olist baseline |
+| Average-ROI coverage, misspecified fit | 0.6 | headline panel, 85 weeks, real Olist baseline |
+| Recovery-grid fits converged | 21/40 | 40-cell factorial grid, 5 seeds per cell |
+| BG/NBD maximum-likelihood fits that converged | 0/15 | full Olist base, 3 time scales x 5 penalties |
+| Holdout mean absolute error, repeat purchases | 0.008527 | 16-week holdout to 2018-08-20 |
+| Cost of allocating from last-click attribution | 0.3421 | headline panel, full budget, evaluated under the true response curves |
 
 ## Limitations
 

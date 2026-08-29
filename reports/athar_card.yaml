@@ -30,6 +30,33 @@ metrics:
   value: 1.6827
   split: full population, 13,979,592 rows, no sampling
   note: Real data. The numerator conditions on exposure, which is post-treatment.
+- name: Average-ROI coverage, matched fit
+  value: 1.0
+  split: headline panel, 85 weeks, real Olist baseline
+  note: 5/5 channels inside the 89% interval; median absolute relative error 5.43. Simulated
+    media.
+- name: Average-ROI coverage, misspecified fit
+  value: 0.6
+  split: headline panel, 85 weeks, real Olist baseline
+  note: 3/5 channels inside the 89% interval; median absolute relative error 0.26. Simulated
+    media.
+- name: Recovery-grid fits converged
+  value: 21/40
+  split: 40-cell factorial grid, 5 seeds per cell
+  note: Fits failing the diagnostics are excluded from every coverage rate and counted here,
+    rather than averaged in.
+- name: BG/NBD maximum-likelihood fits that converged
+  value: 0/15
+  split: full Olist base, 3 time scales x 5 penalties
+  note: 'Real data. A negative result: the dropout parameters are unidentified.'
+- name: Holdout mean absolute error, repeat purchases
+  value: 0.008527
+  split: 16-week holdout to 2018-08-20
+  note: 'Predicting zero scores 0.007987; beats it: False.'
+- name: Cost of allocating from last-click attribution
+  value: 0.3421
+  split: headline panel, full budget, evaluated under the true response curves
+  note: Share of achievable incremental revenue forgone. Simulated media.
 limitations:
 - No figure describes the effectiveness of any real marketing channel. The channel-spend panel,
   the effect sizes and the attribution bias are all constructed from a pre-registered configuration.
