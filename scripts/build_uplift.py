@@ -83,6 +83,7 @@ def main():
     propensity = float(treatment_train.mean())
     log.info("supplying the known propensity %.4f rather than estimating it", propensity)
     propensity_train = np.full(len(treatment_train), propensity)
+    propensity_test = np.full(len(features_test), propensity)
 
     scores: dict[str, np.ndarray] = {}
 
@@ -100,7 +101,14 @@ def main():
             model.fit(
                 X=features_train, treatment=treatment_train, y=outcome_train, p=propensity_train
             )
-            predicted = model.predict(X=features_test)
+            # The X-learner re-derives the propensity at predict time too, and
+            # raises looking for a model it never fitted because one was supplied.
+            # Handing it the same design constant is both correct and what stops it.
+            predicted = (
+                model.predict(X=features_test, p=propensity_test)
+                if name == "x_learner"
+                else model.predict(X=features_test)
+            )
             scores[name] = np.asarray(predicted).ravel()[: len(features_test)]
         except Exception as error:  # noqa: BLE001 - a failed learner is recorded, not hidden
             log.warning("  %s failed: %s: %s", name, type(error).__name__, error)
@@ -113,7 +121,15 @@ def main():
         # memory on this machine, and the subsample size is reported so the
         # comparison against the meta-learners is not read as like-for-like.
         forest_rows = min(400_000, len(features_train))
-        forest = CausalForestDML(n_estimators=200, min_samples_leaf=50, random_state=SEED)
+        # discrete_treatment is not optional here. The arm is binary, and the
+        # default treats it as continuous — which on features this repetitive
+        # produced a singular matrix in the first stage rather than a fit.
+        forest = CausalForestDML(
+            n_estimators=200,
+            min_samples_leaf=50,
+            discrete_treatment=True,
+            random_state=SEED,
+        )
         forest.fit(
             outcome_train[:forest_rows],
             treatment_train[:forest_rows],
