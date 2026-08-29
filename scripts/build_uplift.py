@@ -124,10 +124,17 @@ def main():
         # this file is not a sample of it, and the failure was the good outcome:
         # a slightly less skewed slice would have fitted and been quietly wrong.
         #
-        # The subsample exists because a causal forest on five million rows
-        # exhausts memory here, and its size is reported so the comparison against
-        # the meta-learners is not read as like-for-like.
-        forest_rows = min(400_000, len(features_train))
+        # The subsample exists because a causal forest does not scale to the full
+        # training set on this machine, and its size is reported so the comparison
+        # against the meta-learners is not read as like-for-like.
+        #
+        # 400,000 rows with 200 trees ran for two hours and forty minutes on eight
+        # cores without finishing. That is a real cost, not a tuning detail: an
+        # honest causal forest cross-fits nuisance models and then grows the forest
+        # on the residuals, and the meta-learners here fit in under twenty seconds
+        # each. The size below is what completes; the artifact records both it and
+        # the fact that this is the expensive estimator in the comparison.
+        forest_rows = min(120_000, len(features_train))
         forest_index = np.random.default_rng(SEED).choice(
             len(features_train), size=forest_rows, replace=False
         )
@@ -135,7 +142,7 @@ def main():
         # default treats it as continuous — which on features this repetitive
         # produced a singular matrix in the first stage rather than a fit.
         forest = CausalForestDML(
-            n_estimators=200,
+            n_estimators=100,
             min_samples_leaf=50,
             discrete_treatment=True,
             random_state=SEED,
@@ -197,6 +204,14 @@ def main():
             ),
             "causal_forest_train_rows": forest_rows,
             "causal_forest_subsample": "random, not the first N rows",
+            "causal_forest_cost": (
+                "The expensive estimator in this comparison by a wide margin. At 400,000 "
+                "rows with 200 trees it ran for two hours and forty minutes on eight cores "
+                "without finishing, against under twenty seconds for each meta-learner. It "
+                "is fitted on a smaller subsample for that reason, and its Qini should be "
+                "read as coming from less data than the others rather than as a like-for-"
+                "like comparison."
+            ),
             "file_ordering_note": (
                 "The Criteo file is strongly ordered by treatment arm: the first "
                 "200,000 rows of a random 1M sample's training half are 99.3% treated "
