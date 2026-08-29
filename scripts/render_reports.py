@@ -386,76 +386,102 @@ relative error {summary["median_absolute_relative_error"]:.1%}, mean interval wi
             )
         convergence = recovery["convergence"]
 
-        # The two claims below are computed from the fits and emitted only if the
-        # numbers actually point that way. A narrative written in advance and left
-        # to stand whatever the data said would be the opposite of the point.
+        # Every claim below is computed from the fitted cells and emitted only if
+        # the numbers point that way. A narrative written in advance and left to
+        # stand whatever the data said would be the opposite of this project's
+        # point, so each one is gated on its own direction check.
         fits = [f for f in recovery["fits"] if f["diagnostics"]["passed"]]
         claims = []
+
+        def cell(spec, collinearity, weeks, key="average_roi"):
+            chosen = [
+                f[key]["summary"]
+                for f in fits
+                if f["specification"] == spec
+                and f["collinearity"] == collinearity
+                and f["weeks"] == weeks
+            ]
+            if not chosen:
+                return None
+            return {
+                "n": len(chosen),
+                "coverage": median([c["coverage_rate"] for c in chosen]),
+                "error": median([c["median_absolute_relative_error"] for c in chosen]),
+                "width": median([c["mean_interval_width"] for c in chosen]),
+            }
+
         by_spec = {}
         for fit in fits:
             by_spec.setdefault(fit["specification"], []).append(fit["average_roi"]["summary"])
+
         if {"matched", "misspecified"} <= set(by_spec):
-            matched = by_spec["matched"]
-            misspec = by_spec["misspecified"]
-            m_err = median([s["median_absolute_relative_error"] for s in matched])
-            x_err = median([s["median_absolute_relative_error"] for s in misspec])
-            m_wide = median([s["mean_interval_width"] for s in matched])
-            x_wide = median([s["mean_interval_width"] for s in misspec])
-            m_cov = median([s["coverage_rate"] for s in matched])
-            x_cov = median([s["coverage_rate"] for s in misspec])
+            m = by_spec["matched"]
+            x = by_spec["misspecified"]
+            m_cov, x_cov = (
+                median([c["coverage_rate"] for c in m]),
+                median([c["coverage_rate"] for c in x]),
+            )
+            m_err, x_err = (
+                median([c["median_absolute_relative_error"] for c in m]),
+                median([c["median_absolute_relative_error"] for c in x]),
+            )
+            m_wide, x_wide = (
+                median([c["mean_interval_width"] for c in m]),
+                median([c["mean_interval_width"] for c in x]),
+            )
             if m_cov >= x_cov and m_err > x_err and m_wide > x_wide:
                 claims.append(
                     f"**Fitting the right functional form made the answer worse.** The "
-                    f"matched arm — the one given the shape that generated the data — "
+                    f"matched arm — the one handed the shape that generated the data — "
                     f"reaches higher coverage ({m_cov:.2f} against {x_cov:.2f}) and is "
-                    f"nonetheless further from the truth, with a median relative error of "
-                    f"{m_err:.2f} against {x_err:.2f} and intervals {m_wide / x_wide:.1f} "
-                    f"times wider. It has more parameters to identify — a decay and a delay, "
-                    f"a slope and a half-saturation point — from the same weak signal, so it "
-                    f"pins none of them down and covers the truth by being unable to exclude "
-                    f"anything. This is the clearest argument in the project against reading "
-                    f"coverage on its own, and it points the other way from the obvious "
-                    f"expectation that the correctly-specified model should win."
+                    f"nonetheless {m_err / x_err:.0f} times further from the truth, with a "
+                    f"median relative error of {m_err:.2f} against {x_err:.2f} and intervals "
+                    f"{m_wide / x_wide:.0f} times wider. It has more parameters to identify "
+                    f"— a decay and a delay, a slope and a half-saturation point — from the "
+                    f"same weak signal, so it pins none of them down and covers the truth by "
+                    f"being unable to exclude anything. This is the clearest argument in the "
+                    f"project against reading coverage on its own, and it points the "
+                    f"opposite way from the obvious expectation that the "
+                    f"correctly-specified model should win."
                 )
 
-        lengths = sorted({f["weeks"] for f in fits})
-        if len(lengths) == 2:
-            short, long = lengths
-            for spec in ("misspecified", "matched"):
-                subset = [f for f in fits if f["specification"] == spec]
-                s_cov = [
-                    f["average_roi"]["summary"]["coverage_rate"]
-                    for f in subset
-                    if f["weeks"] == short
-                ]
-                l_cov = [
-                    f["average_roi"]["summary"]["coverage_rate"]
-                    for f in subset
-                    if f["weeks"] == long
-                ]
-                s_wide = [
-                    f["average_roi"]["summary"]["mean_interval_width"]
-                    for f in subset
-                    if f["weeks"] == short
-                ]
-                l_wide = [
-                    f["average_roi"]["summary"]["mean_interval_width"]
-                    for f in subset
-                    if f["weeks"] == long
-                ]
-                if not (s_cov and l_cov and s_wide and l_wide):
-                    continue
-                if median(l_cov) < median(s_cov) and median(l_wide) < median(s_wide):
-                    claims.append(
-                        f"**More data made coverage worse for the {spec} model.** Going from "
-                        f"{short} to {long} weeks moved coverage from {median(s_cov):.2f} to "
-                        f"{median(l_cov):.2f} while the intervals narrowed from "
-                        f"{median(s_wide):.2f} to {median(l_wide):.2f}. That is what a "
-                        f"misspecified model does with more evidence: it becomes more "
-                        f"confident about the wrong value. Length helps a model that could "
-                        f"have been right and hurts one that could not."
-                    )
-                    break
+        counts = {}
+        for fit in recovery["fits"]:
+            entry = counts.setdefault(fit["specification"], [0, 0])
+            entry[0] += 1
+            entry[1] += int(fit["diagnostics"]["passed"])
+        if {"matched", "misspecified"} <= set(counts):
+            mt, mc = counts["matched"]
+            xt, xc = counts["misspecified"]
+            if mc / mt < xc / xt:
+                claims.append(
+                    f"**And it was harder to fit at all.** The matched arm passed its "
+                    f"sampler diagnostics in {mc} of {mt} runs against {xc} of {xt} for the "
+                    f"misspecified one. The extra parameters do not only widen the interval; "
+                    f"they make the posterior geometry hard enough that the sampler often "
+                    f"cannot explore it. A practitioner who reached for the more flexible "
+                    f"model would spend the time and end up with fewer usable fits."
+                )
+
+        for collinearity in ("high", "low"):
+            short, long = (
+                cell("misspecified", collinearity, 85),
+                cell("misspecified", collinearity, 156),
+            )
+            if not (short and long):
+                continue
+            if long["coverage"] < short["coverage"] and long["width"] < short["width"]:
+                claims.append(
+                    f"**More data made coverage worse.** For the misspecified model at "
+                    f"{collinearity} collinearity, going from 85 to 156 weeks moved coverage "
+                    f"from {short['coverage']:.2f} to {long['coverage']:.2f} while the "
+                    f"intervals narrowed from {short['width']:.2f} to {long['width']:.2f}. "
+                    f"That is what a misspecified model does with more evidence: it becomes "
+                    f"more confident about the wrong value. Length helps a model that could "
+                    f"have been right and hurts one that could not — which is worth knowing "
+                    f"before waiting a year to collect more history."
+                )
+                break
 
         narrative = (
             "\n\n".join(claims)

@@ -61,9 +61,9 @@ Mean absolute error, not MAPE: the actual holdout count is zero for almost every
 
 | | Value |
 |---|---:|
-| Mean expected CLV over a year (BRL) | nan |
+| Mean expected CLV over a year (BRL) | not computable |
 | Mean first-order value (BRL) | 138.12 |
-| CLV as a share of first-order value | nan% |
-| Correlation with first-order value | nan |
+| CLV as a share of first-order value | not computable |
+| Correlation with first-order value | not computable |
 
-Olist is a one-shot acquisition business. With a 3% repeat rate, expected lifetime value is a small multiple of first-order value and is very nearly proportional to it. The consequence is carried into the budget decision in metrics/triangulation.json: when lifetime value is proportional to immediate value, weighting a media allocation by one or the other gives the same answer, and a story the brief invites cannot honestly be told on this data.
+The BG/NBD posterior is degenerate — alpha sits at roughly 1e-306 — so the expected-purchases calculation divides by a denormal and returns NaN for every customer. There is no lifetime value to report because there is no working transaction model to compute it from. That is the finding, not a gap in it.

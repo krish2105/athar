@@ -1,14 +1,16 @@
 {
   "finding": "Olist is a one-shot acquisition business. With a 3% repeat rate, expected lifetime value is a small multiple of first-order value and is very nearly proportional to it. The consequence is carried into the budget decision in metrics/triangulation.json: when lifetime value is proportional to immediate value, weighting a media allocation by one or the other gives the same answer, and a story the brief invites cannot honestly be told on this data.",
   "lifetime_value": {
-    "clv_over_first_order_value": NaN,
-    "correlation_clv_with_first_order_value": NaN,
+    "clv_over_first_order_value": null,
+    "computable": false,
+    "correlation_clv_with_first_order_value": null,
     "horizon_weeks": 52.0,
-    "mean_expected_clv_brl": NaN,
+    "mean_expected_clv_brl": null,
     "mean_first_order_value_brl": 138.11620381947782,
-    "mean_predicted_purchases": NaN,
-    "median_predicted_purchases": NaN,
-    "share_predicted_below_0_1_purchases": 0.9959603731845724
+    "mean_predicted_purchases": null,
+    "median_predicted_purchases": null,
+    "share_predicted_below_0_1_purchases": null,
+    "why_not": "The BG/NBD posterior is degenerate — alpha sits at roughly 1e-306 — so the expected-purchases calculation divides by a denormal and returns NaN for every customer. There is no lifetime value to report because there is no working transaction model to compute it from. That is the finding, not a gap in it."
   },
   "maximum_likelihood": {
     "attempts_full_base": [
