@@ -562,9 +562,16 @@ export function DecisionSection() {
   };
 
   const surface = allocator.surface;
+  // The truth marker takes ink; the estimators take the categorical slots in fixed
+  // order. Counted separately from the loop index so the palette is never cycled —
+  // reusing a hue would put two estimators in the same colour on one legend.
+  const estimatorHues = dark
+    ? ["#d95926", "#3987e5", "#199e70", "#6b6862"]
+    : ["#eb6834", "#2a78d6", "#1baf7a", "#a9a49a"];
+  let hue = 0;
   const markers = order
     .filter((key) => key !== "equal_split")
-    .map((key, index) => ({
+    .map((key) => ({
       key,
       label: LABELS[key] ?? key,
       x: allocations[key].spend[surface.channels[0]],
@@ -575,7 +582,7 @@ export function DecisionSection() {
           ? dark
             ? "#f0ede7"
             : "#16171b"
-          : ["#eb6834", "#2a78d6", "#1baf7a", "#a9a49a"][index % 4],
+          : (estimatorHues[hue++] ?? "var(--ink-3)"),
     }));
 
   return (

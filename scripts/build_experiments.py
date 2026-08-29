@@ -11,6 +11,7 @@ this project invented.
 Run: `make experiments`
 """
 
+import json
 import logging
 import warnings
 
@@ -101,7 +102,17 @@ def main():
         result["spend_withheld"] = spend_in_window
         headline[channel] = result
 
-    stored = truth.load_truth(after=paths.metrics_dir() / "panel.json")
+    # The estimates are committed to disk before the truth becomes readable. A geo
+    # holdout fits no model, so there is no posterior to gate on — but the gate is
+    # only meaningful if it is satisfied by this step's own output rather than by
+    # an artifact that happened to already exist.
+    estimates_path = paths.processed_dir() / "experiment_estimates.json"
+    estimates_path.write_text(
+        json.dumps({"power": curves, "headline": headline}, indent=2, sort_keys=True) + "\n"
+    )
+    log.info("wrote %s; the ground truth becomes readable only now", estimates_path.name)
+
+    stored = truth.load_truth(after=estimates_path)
 
     payload = {
         "geography": {
