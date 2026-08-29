@@ -12,6 +12,7 @@ Run: `make reports`
 
 import json
 import logging
+from statistics import median
 
 from athar import paths
 from athar.provenance import markdown_caveat
@@ -384,6 +385,83 @@ relative error {summary["median_absolute_relative_error"]:.1%}, mean interval wi
                 f"{block['mean_interval_width']:.2f} |"
             )
         convergence = recovery["convergence"]
+
+        # The two claims below are computed from the fits and emitted only if the
+        # numbers actually point that way. A narrative written in advance and left
+        # to stand whatever the data said would be the opposite of the point.
+        fits = [f for f in recovery["fits"] if f["diagnostics"]["passed"]]
+        claims = []
+        by_spec = {}
+        for fit in fits:
+            by_spec.setdefault(fit["specification"], []).append(fit["average_roi"]["summary"])
+        if {"matched", "misspecified"} <= set(by_spec):
+            matched = by_spec["matched"]
+            misspec = by_spec["misspecified"]
+            m_err = median([s["median_absolute_relative_error"] for s in matched])
+            x_err = median([s["median_absolute_relative_error"] for s in misspec])
+            m_wide = median([s["mean_interval_width"] for s in matched])
+            x_wide = median([s["mean_interval_width"] for s in misspec])
+            m_cov = median([s["coverage_rate"] for s in matched])
+            x_cov = median([s["coverage_rate"] for s in misspec])
+            if m_cov >= x_cov and m_err > x_err and m_wide > x_wide:
+                claims.append(
+                    f"**Fitting the right functional form made the answer worse.** The "
+                    f"matched arm — the one given the shape that generated the data — "
+                    f"reaches higher coverage ({m_cov:.2f} against {x_cov:.2f}) and is "
+                    f"nonetheless further from the truth, with a median relative error of "
+                    f"{m_err:.2f} against {x_err:.2f} and intervals {m_wide / x_wide:.1f} "
+                    f"times wider. It has more parameters to identify — a decay and a delay, "
+                    f"a slope and a half-saturation point — from the same weak signal, so it "
+                    f"pins none of them down and covers the truth by being unable to exclude "
+                    f"anything. This is the clearest argument in the project against reading "
+                    f"coverage on its own, and it points the other way from the obvious "
+                    f"expectation that the correctly-specified model should win."
+                )
+
+        lengths = sorted({f["weeks"] for f in fits})
+        if len(lengths) == 2:
+            short, long = lengths
+            for spec in ("misspecified", "matched"):
+                subset = [f for f in fits if f["specification"] == spec]
+                s_cov = [
+                    f["average_roi"]["summary"]["coverage_rate"]
+                    for f in subset
+                    if f["weeks"] == short
+                ]
+                l_cov = [
+                    f["average_roi"]["summary"]["coverage_rate"]
+                    for f in subset
+                    if f["weeks"] == long
+                ]
+                s_wide = [
+                    f["average_roi"]["summary"]["mean_interval_width"]
+                    for f in subset
+                    if f["weeks"] == short
+                ]
+                l_wide = [
+                    f["average_roi"]["summary"]["mean_interval_width"]
+                    for f in subset
+                    if f["weeks"] == long
+                ]
+                if not (s_cov and l_cov and s_wide and l_wide):
+                    continue
+                if median(l_cov) < median(s_cov) and median(l_wide) < median(s_wide):
+                    claims.append(
+                        f"**More data made coverage worse for the {spec} model.** Going from "
+                        f"{short} to {long} weeks moved coverage from {median(s_cov):.2f} to "
+                        f"{median(l_cov):.2f} while the intervals narrowed from "
+                        f"{median(s_wide):.2f} to {median(l_wide):.2f}. That is what a "
+                        f"misspecified model does with more evidence: it becomes more "
+                        f"confident about the wrong value. Length helps a model that could "
+                        f"have been right and hurts one that could not."
+                    )
+                    break
+
+        narrative = (
+            "\n\n".join(claims)
+            if claims
+            else "No claim here survived a check against the fitted cells."
+        )
         grid = f"""## The recovery grid
 
 {convergence["fits"]} full-posterior fits: {" × ".join(str(x) for x in recovery["design"]["panel_lengths"])} weeks,
@@ -406,6 +484,10 @@ uselessly wide, so width is reported beside it. A cell with coverage 1.00 and a
 median error above 1.0 has not recovered anything; it has declined to answer.
 
 {convergence["rule_note"]}
+
+## What the grid shows
+
+{narrative}
 """
 
     return f"""# ATHAR — did the media-mix model recover the truth
