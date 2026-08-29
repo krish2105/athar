@@ -111,12 +111,10 @@ redistributable here — see `data/README.md` in the parent directory.
 make all
 ```
 
-`make lint` and `make test` are the gate that matters, and they run locally.
-Continuous integration builds the dashboard and checks that the committed page
-matches its source, but skips the Python job by default: ATHAR depends on SPINE as
-an editable path dependency and SPINE is private, so CI cannot clone it without a
-credential this repository does not carry. `.github/workflows/checks.yml` says so
-in full rather than failing quietly.
+Continuous integration runs the same lint and test gate, and separately builds the
+dashboard and fails if the committed page no longer matches its source. It does
+not run `make all`: the pipeline reads Olist and Criteo from a shared store that
+is not redistributable, and forty full-posterior fits are not a CI job.
 
 `lint` → `test` → `gate` → `frame` → `criteo` → `panel` → `mmm` → `uplift` → `clv`
 → `experiments` → `recovery` → `triangulate` → `notebooks` → `reports` → `card` →

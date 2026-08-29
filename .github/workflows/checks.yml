@@ -1,18 +1,15 @@
-# What CI can honestly check, and what it cannot.
+# Lint, test, and build the page.
 #
-# The dashboard job is complete: it type-checks and builds the page from the
-# committed metrics artifacts, which is the whole of that surface.
+# The Python job clones SPINE alongside the checkout, because ATHAR consumes it
+# as an editable path dependency at `../01-spine` and `actions/checkout` cannot
+# place a repository outside the workspace. Both repositories are checked out
+# into siblings under the workspace parent, which reproduces the layout the
+# README describes.
 #
-# The Python job is gated on a token, and is skipped by default. ATHAR depends on
-# SPINE as an editable path dependency at `../01-spine`, and SPINE is a private
-# repository. `actions/checkout` cannot place a repository outside the workspace,
-# and cloning a private repo needs a credential this repository does not carry. So
-# rather than let the job fail and leave a red badge that means nothing, it runs
-# only when a `SPINE_TOKEN` secret exists.
-#
-# Until then, `make lint` and `make test` are the local gate, and the README says
-# so. Making SPINE public, or adding the secret, turns this on with no other
-# change.
+# What CI does not run is `make all`: the pipeline reads Olist and Criteo from a
+# shared store outside the repository which is not redistributable, and forty
+# full-posterior fits are not a CI job. It checks that the library is clean, the
+# tests pass, and the committed page still matches its source.
 
 name: checks
 
@@ -23,41 +20,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  gate:
-    runs-on: ubuntu-latest
-    outputs:
-      spine: ${{ steps.check.outputs.spine }}
-    steps:
-      - id: check
-        env:
-          SPINE_TOKEN: ${{ secrets.SPINE_TOKEN }}
-        run: echo "spine=${{ env.SPINE_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
-
   python:
-    needs: gate
-    if: needs.gate.outputs.spine == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          path: athar
+          path: 03-athar
       - uses: actions/checkout@v4
         with:
           repository: krish2105/spine
-          token: ${{ secrets.SPINE_TOKEN }}
-          path: spine
-      - name: Put SPINE where the path dependency expects it
-        run: mv spine "$(dirname "$GITHUB_WORKSPACE")/01-spine" || mv spine ../01-spine
+          path: 01-spine
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - working-directory: athar
+      - name: Sync, with SPINE as a sibling
+        working-directory: 03-athar
         run: uv sync --all-extras
-      - working-directory: athar
+      - working-directory: 03-athar
         run: uv run ruff check .
-      - working-directory: athar
+      - working-directory: 03-athar
         run: uv run ruff format --check .
-      - working-directory: athar
+      - working-directory: 03-athar
         run: uv run pytest -q
 
   dashboard:
