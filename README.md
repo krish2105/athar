@@ -102,8 +102,17 @@ uv sync --all-extras
 cp .env.example .env      # DATA_ROOT points at the shared data store
 ```
 
-Data lives outside the repository and is never committed. Olist and Criteo are not
-redistributable here — see `data/README.md` in the parent directory.
+Data lives outside the repository and is never committed, so two datasets have to
+be fetched into `<DATA_ROOT>/raw/` before anything will run. Neither is
+redistributable here.
+
+| Directory | Dataset | Source |
+|---|---|---|
+| `raw/olist/` | Brazilian E-Commerce Public Dataset by Olist — 9 CSVs | Kaggle: `olistbr/brazilian-ecommerce` |
+| `raw/criteo/` | Criteo Uplift Modeling Dataset v2.1 — `criteo-uplift-v2.1.csv`, 3.2 GB | [ailab.criteo.com/criteo-uplift-prediction-dataset](https://ailab.criteo.com/criteo-uplift-prediction-dataset/) |
+
+`make frame` and `make criteo` fail with the expected path if either is missing,
+rather than proceeding on partial data.
 
 ## Run
 
