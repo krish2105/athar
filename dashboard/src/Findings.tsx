@@ -499,15 +499,28 @@ export function ClvSection() {
               </div>
               <div className="tile">
                 <div className="k">Expected lifetime value</div>
-                <div className="v">{brl(value.mean_expected_clv_brl, 2)}</div>
-                <p className="n">over a year, mean across the base</p>
+                <div className="v" style={{ fontSize: "clamp(1.1rem, 2vw, 1.5rem)" }}>
+                  {value.computable ? brl(value.mean_expected_clv_brl, 2) : "not computable"}
+                </div>
+                <p className="n">
+                  {value.computable
+                    ? "over a year, mean across the base"
+                    : "there is no working transaction model to compute it from"}
+                </p>
               </div>
               <div className="tile">
                 <div className="k">First-order value</div>
                 <div className="v">{brl(value.mean_first_order_value_brl, 0)}</div>
                 <p className="n">
-                  Lifetime value is{" "}
-                  <span className="num">{pct(value.clv_over_first_order_value, 2)}</span> of it
+                  {value.computable ? (
+                    <>
+                      Lifetime value is{" "}
+                      <span className="num">{pct(value.clv_over_first_order_value, 2)}</span> of
+                      it
+                    </>
+                  ) : (
+                    "the one lifetime-value figure this base does support"
+                  )}
                 </p>
               </div>
             </div>
@@ -519,6 +532,9 @@ export function ClvSection() {
               <p style={{ borderLeft: "2px solid var(--signal)", paddingLeft: "1rem" }}>
                 <strong>Verdict.</strong> {clv.verdict}
               </p>
+            )}
+            {value.why_not && (
+              <p style={{ color: "var(--ink-2)" }}>{value.why_not}</p>
             )}
             <p style={{ color: "var(--ink-2)" }}>{clv.finding}</p>
           </div>

@@ -41,6 +41,21 @@ def label(channel):
     return LABELS.get(channel, channel)
 
 
+#: A quantity that could not be computed is written as null in the artifact, with
+#: the reason beside it. These render that as an absence rather than as a zero,
+#: because a zero would be a claim.
+def money(value):
+    return f"{value:,.2f}" if value is not None else "not computable"
+
+
+def share(value):
+    return f"{value:.2%}" if value is not None else "not computable"
+
+
+def number(value):
+    return f"{value:.3f}" if value is not None else "not computable"
+
+
 def load(name):
     path = paths.metrics_dir() / f"{name}.json"
     return json.loads(path.read_text()) if path.exists() else None
@@ -518,12 +533,12 @@ without changing them.
 
 | | Value |
 |---|---:|
-| Mean expected CLV over a year (BRL) | {value["mean_expected_clv_brl"]:.2f} |
-| Mean first-order value (BRL) | {value["mean_first_order_value_brl"]:.2f} |
-| CLV as a share of first-order value | {value["clv_over_first_order_value"]:.2%} |
-| Correlation with first-order value | {value["correlation_clv_with_first_order_value"]:.3f} |
+| Mean expected CLV over a year (BRL) | {money(value["mean_expected_clv_brl"])} |
+| Mean first-order value (BRL) | {money(value["mean_first_order_value_brl"])} |
+| CLV as a share of first-order value | {share(value["clv_over_first_order_value"])} |
+| Correlation with first-order value | {number(value["correlation_clv_with_first_order_value"])} |
 
-{clv["finding"]}
+{value.get("why_not") or clv["finding"]}
 """
 
 
